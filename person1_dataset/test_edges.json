@@ -1,0 +1,170 @@
+[
+  {
+    "source_id": 1,
+    "target_id": 2,
+    "distance": 500,
+    "lighting": 9,
+    "CCTV": 1,
+    "crime": 2
+  },
+  {
+    "source_id": 1,
+    "target_id": 3,
+    "distance": 2700,
+    "lighting": 8,
+    "CCTV": 1,
+    "crime": 3
+  },
+  {
+    "source_id": 1,
+    "target_id": 6,
+    "distance": 3500,
+    "lighting": 7,
+    "CCTV": 1,
+    "crime": 4
+  },
+  {
+    "source_id": 2,
+    "target_id": 4,
+    "distance": 3000,
+    "lighting": 6,
+    "CCTV": 0,
+    "crime": 5
+  },
+  {
+    "source_id": 3,
+    "target_id": 5,
+    "distance": 5000,
+    "lighting": 7,
+    "CCTV": 1,
+    "crime": 4
+  },
+  {
+    "source_id": 3,
+    "target_id": 8,
+    "distance": 4500,
+    "lighting": 8,
+    "CCTV": 1,
+    "crime": 3
+  },
+  {
+    "source_id": 3,
+    "target_id": 10,
+    "distance": 6500,
+    "lighting": 7,
+    "CCTV": 1,
+    "crime": 4
+  },
+  {
+    "source_id": 3,
+    "target_id": 14,
+    "distance": 4500,
+    "lighting": 8,
+    "CCTV": 1,
+    "crime": 3
+  },
+  {
+    "source_id": 4,
+    "target_id": 5,
+    "distance": 1200,
+    "lighting": 5,
+    "CCTV": 0,
+    "crime": 6
+  },
+  {
+    "source_id": 4,
+    "target_id": 6,
+    "distance": 4000,
+    "lighting": 6,
+    "CCTV": 0,
+    "crime": 5
+  },
+  {
+    "source_id": 4,
+    "target_id": 10,
+    "distance": 7000,
+    "lighting": 6,
+    "CCTV": 0,
+    "crime": 6
+  },
+  {
+    "source_id": 4,
+    "target_id": 15,
+    "distance": 5000,
+    "lighting": 6,
+    "CCTV": 0,
+    "crime": 5
+  },
+  {
+    "source_id": 5,
+    "target_id": 10,
+    "distance": 6000,
+    "lighting": 7,
+    "CCTV": 1,
+    "crime": 4
+  },
+  {
+    "source_id": 6,
+    "target_id": 7,
+    "distance": 8000,
+    "lighting": 8,
+    "CCTV": 1,
+    "crime": 3
+  },
+  {
+    "source_id": 7,
+    "target_id": 8,
+    "distance": 2500,
+    "lighting": 9,
+    "CCTV": 1,
+    "crime": 2
+  },
+  {
+    "source_id": 7,
+    "target_id": 11,
+    "distance": 5000,
+    "lighting": 8,
+    "CCTV": 1,
+    "crime": 3
+  },
+  {
+    "source_id": 8,
+    "target_id": 9,
+    "distance": 7000,
+    "lighting": 7,
+    "CCTV": 1,
+    "crime": 4
+  },
+  {
+    "source_id": 9,
+    "target_id": 10,
+    "distance": 9000,
+    "lighting": 6,
+    "CCTV": 0,
+    "crime": 5
+  },
+  {
+    "source_id": 11,
+    "target_id": 12,
+    "distance": 8000,
+    "lighting": 7,
+    "CCTV": 1,
+    "crime": 4
+  },
+  {
+    "source_id": 12,
+    "target_id": 13,
+    "distance": 7000,
+    "lighting": 6,
+    "CCTV": 1,
+    "crime": 5
+  },
+  {
+    "source_id": 13,
+    "target_id": 14,
+    "distance": 4000,
+    "lighting": 7,
+    "CCTV": 1,
+    "crime": 3
+  }
+]
