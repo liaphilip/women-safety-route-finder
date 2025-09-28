@@ -1,60 +1,87 @@
 import networkx as nx
 import json
 
-# -----------------
+#********************************
 # 1. Create empty graph
-# -----------------
+#*************************
 def create_graph():
     return nx.Graph()
 
-# -----------------
+#*****************
 # 2. Add a node
-# -----------------
-def add_node(G, node_id, name, lat, lng, node_type="intersection"):
-    G.add_node(node_id, name=name, lat=lat, lng=lng, type=node_type)
+#*****************
+def add_node(G, node_id, name, lat, lon):
+    G.add_node(node_id, name=name, lat=lat, lon=lon)
 
-# -----------------
+#*****************
 # 3. Add an edge
-# -----------------
-def add_edge(G, source, target, distance_m, lighting=5, CCTV=0, crowd=5, crime=5, nearest_police_m=500):
-    G.add_edge(
-        source, target,
-        distance_m=distance_m,
-        lighting=lighting,
-        CCTV=CCTV,
-        crowd=crowd,
-        crime=crime,
-        nearest_police_m=nearest_police_m
-    )
+#*****************
+def add_edge(G, from_id, to_id, distance_m, lighting=5, CCTV=0, crime=5):
+    G.add_edge(from_id, to_id, distance=distance_m, lighting=lighting, CCTV=CCTV, crime=crime)
 
-# -----------------
+#**********************
 # 5. Export to JSON
-# -----------------
+#*********************
 def export_to_json(G, node_file="nodes.json", edge_file="edges.json"):
     nodes = [dict(id=n, **data) for n, data in G.nodes(data=True)]
     edges = [dict(source_id=u, target_id=v, **data) for u, v, data in G.edges(data=True)]
-
+    
     with open(node_file, "w") as f:
         json.dump(nodes, f, indent=2)
     with open(edge_file, "w") as f:
         json.dump(edges, f, indent=2)
 
+#*********************
+# 6. Neighbors function
+#*********************
+def neighbors(G, node_id):
+    if node_id not in G:
+        return []
+    return list(G.neighbors(node_id))
+
+#*********************
+# 7. Temporary remove node
+#*********************
+removed_nodes = {}  
+
+def temp_remove(G, node_id):
+    if node_id in G:
+        removed_nodes[node_id] = list(G.edges(node_id, data=True))
+        G.remove_node(node_id)
+
+#*********************
+# 8. Restore removed node
+#*********************
+def restore_node(G, node_id):
+    if node_id in removed_nodes:
+        G.add_node(node_id)  # restore the node
+        for u, v, attr in removed_nodes[node_id]:
+            # add edge only if it doesn't already exist
+            if not G.has_edge(u, v):
+                G.add_edge(u, v, **attr)
+        del removed_nodes[node_id]
+
+#*********************
+# 9. Block and restore edges
+#*********************
+blocked_edges = {}
+
+def block_edge(G, u, v):
+    key = tuple(sorted([u, v]))  # consistent key for undirected graph
+    if G.has_edge(u, v):
+        blocked_edges[key] = G[u][v]
+        G.remove_edge(u, v)
+
+def restore_edge(G, u, v):
+    key = tuple(sorted([u, v]))
+    if key in blocked_edges:
+        G.add_edge(u, v, **blocked_edges[key])
+        del blocked_edges[key]
+
+#stimulatingg data of delhi 
 G = create_graph()
 
-# Add some nodes
-import networkx as nx
-
-def add_node(G, node_id, name, lat, lon):
-    G.add_node(node_id, name=name, lat=lat, lon=lon)
-
-def add_edge(G, from_id, to_id, distance_m, lighting, CCTV, crime):
-    G.add_edge(from_id, to_id, distance=distance_m, lighting=lighting, CCTV=CCTV, crime=crime)
-
-# Create graph
-G = nx.Graph()
-
-
-# --- Add nodes (25 Delhi locations) ---
+# Adding nodes (2 sample nodes, extend as needed)
 add_node(G, 1, "Connaught Place", 28.6315, 77.2167)
 add_node(G, 2, "Rajiv Chowk Metro", 28.6328, 77.2197)
 add_node(G, 3, "India Gate", 28.6129, 77.2295)
@@ -83,7 +110,7 @@ add_node(G, 25, "Pitampura", 28.7073, 77.1323)
 
 
 
-# ~~~~~Add edges (34 connections with attributes) ~~~~~~~~~~~~~~~~~~~
+# ~~~~~           34 connections ~~~~~~~~~~~~~~~~~~~
 
 add_edge(G, 1, 2, 500,   9, 1, 2)
 add_edge(G, 1, 3, 2700,  8, 1, 3)
@@ -122,49 +149,3 @@ add_edge(G, 5, 18, 5200, 6, 1, 4)
 add_edge(G, 10, 22, 6000, 7, 1, 3)
 
 export_to_json(G, "test_nodes.json", "test_edges.json")
-
-# -----------------
-# 6. Get neighbors of a node
-# -----------------
-def get_neighbors(G, node_id):
-    if node_id not in G:
-        return []
-    return list(G.neighbors(node_id))
-
-# -----------------
-# 7. Temporarily remove a node
-# -----------------
-removed_nodes = {}  
-
-def remove_node_temporarily(G, node_id):
-    if node_id in G:
-        removed_nodes[node_id] = list(G.edges(node_id, data=True))
-        G.remove_node(node_id)
-
-# -----------------
-# 8. Restore a previously removed node
-# -----------------
-def restore_node(G, node_id):
-    if node_id in removed_nodes:
-        G.add_node(node_id)
-        for u, v, attr in removed_nodes[node_id]:
-            if u == node_id:
-                G.add_edge(u, v, **attr)
-            else:
-                G.add_edge(v, u, **attr)
-        del removed_nodes[node_id]
-
-# -----------------
-# 9. Block an edge and restore it (disable temporarily)
-# -----------------
-blocked_edges = {}
-
-def block_edge(G, u, v):
-    if G.has_edge(u, v):
-        blocked_edges[(u, v)] = G[u][v]
-        G.remove_edge(u, v)
-
-def restore_edge(G, u, v):
-    if (u, v) in blocked_edges:
-        G.add_edge(u, v, **blocked_edges[(u, v)])
-        del blocked_edges[(u, v)]
