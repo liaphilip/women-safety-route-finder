@@ -88,5 +88,65 @@
     "name": "Delhi University North Campus",
     "lat": 28.6886,
     "lon": 77.21
+  },
+  {
+    "id": 16,
+    "name": "Lajpat Nagar",
+    "lat": 28.5678,
+    "lon": 77.251
+  },
+  {
+    "id": 17,
+    "name": "Hauz Khas Village",
+    "lat": 28.5495,
+    "lon": 77.2016
+  },
+  {
+    "id": 18,
+    "name": "Connaught Place Outer Circle",
+    "lat": 28.632,
+    "lon": 77.219
+  },
+  {
+    "id": 19,
+    "name": "Saket Mall",
+    "lat": 28.524,
+    "lon": 77.2125
+  },
+  {
+    "id": 20,
+    "name": "Rajouri Garden",
+    "lat": 28.6442,
+    "lon": 77.1195
+  },
+  {
+    "id": 21,
+    "name": "Green Park",
+    "lat": 28.5712,
+    "lon": 77.208
+  },
+  {
+    "id": 22,
+    "name": "Vasant Kunj",
+    "lat": 28.5525,
+    "lon": 77.166
+  },
+  {
+    "id": 23,
+    "name": "Dwarka Sector 21",
+    "lat": 28.5863,
+    "lon": 77.0417
+  },
+  {
+    "id": 24,
+    "name": "Nehru Place",
+    "lat": 28.5492,
+    "lon": 77.2596
+  },
+  {
+    "id": 25,
+    "name": "Pitampura",
+    "lat": 28.7073,
+    "lon": 77.1323
   }
 ]
