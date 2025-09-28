@@ -64,6 +64,14 @@
     "crime": 3
   },
   {
+    "source_id": 3,
+    "target_id": 16,
+    "distance": 5500,
+    "lighting": 8,
+    "CCTV": 1,
+    "crime": 3
+  },
+  {
     "source_id": 4,
     "target_id": 5,
     "distance": 1200,
@@ -100,6 +108,14 @@
     "target_id": 10,
     "distance": 6000,
     "lighting": 7,
+    "CCTV": 1,
+    "crime": 4
+  },
+  {
+    "source_id": 5,
+    "target_id": 18,
+    "distance": 5200,
+    "lighting": 6,
     "CCTV": 1,
     "crime": 4
   },
@@ -144,6 +160,14 @@
     "crime": 5
   },
   {
+    "source_id": 10,
+    "target_id": 22,
+    "distance": 6000,
+    "lighting": 7,
+    "CCTV": 1,
+    "crime": 3
+  },
+  {
     "source_id": 11,
     "target_id": 12,
     "distance": 8000,
@@ -166,5 +190,93 @@
     "lighting": 7,
     "CCTV": 1,
     "crime": 3
+  },
+  {
+    "source_id": 15,
+    "target_id": 16,
+    "distance": 4500,
+    "lighting": 6,
+    "CCTV": 0,
+    "crime": 4
+  },
+  {
+    "source_id": 15,
+    "target_id": 25,
+    "distance": 4800,
+    "lighting": 7,
+    "CCTV": 0,
+    "crime": 4
+  },
+  {
+    "source_id": 16,
+    "target_id": 17,
+    "distance": 2000,
+    "lighting": 7,
+    "CCTV": 1,
+    "crime": 3
+  },
+  {
+    "source_id": 17,
+    "target_id": 18,
+    "distance": 3000,
+    "lighting": 8,
+    "CCTV": 1,
+    "crime": 2
+  },
+  {
+    "source_id": 18,
+    "target_id": 19,
+    "distance": 4000,
+    "lighting": 7,
+    "CCTV": 1,
+    "crime": 4
+  },
+  {
+    "source_id": 19,
+    "target_id": 20,
+    "distance": 3500,
+    "lighting": 6,
+    "CCTV": 1,
+    "crime": 3
+  },
+  {
+    "source_id": 20,
+    "target_id": 21,
+    "distance": 2500,
+    "lighting": 8,
+    "CCTV": 1,
+    "crime": 2
+  },
+  {
+    "source_id": 21,
+    "target_id": 22,
+    "distance": 3000,
+    "lighting": 7,
+    "CCTV": 1,
+    "crime": 3
+  },
+  {
+    "source_id": 22,
+    "target_id": 23,
+    "distance": 4500,
+    "lighting": 6,
+    "CCTV": 0,
+    "crime": 4
+  },
+  {
+    "source_id": 23,
+    "target_id": 24,
+    "distance": 5000,
+    "lighting": 7,
+    "CCTV": 1,
+    "crime": 3
+  },
+  {
+    "source_id": 24,
+    "target_id": 25,
+    "distance": 4000,
+    "lighting": 6,
+    "CCTV": 1,
+    "crime": 2
   }
 ]
