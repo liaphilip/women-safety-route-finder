@@ -54,9 +54,9 @@ def temp_remove(G, node_id):
 #*********************
 def restore_node(G, node_id):
     if node_id in removed_nodes:
-        G.add_node(node_id)  # restore the node
+        G.add_node(node_id) 
         for u, v, attr in removed_nodes[node_id]:
-            # add edge only if it doesn't already exist
+            
             if not G.has_edge(u, v):
                 G.add_edge(u, v, **attr)
         del removed_nodes[node_id]
@@ -67,7 +67,7 @@ def restore_node(G, node_id):
 blocked_edges = {}
 
 def block_edge(G, u, v):
-    key = tuple(sorted([u, v]))  # consistent key for undirected graph
+    key = tuple(sorted([u, v]))  
     if G.has_edge(u, v):
         blocked_edges[key] = G[u][v]
         G.remove_edge(u, v)
@@ -81,7 +81,7 @@ def restore_edge(G, u, v):
 #stimulatingg data of delhi 
 G = create_graph()
 
-# Adding nodes (2 sample nodes, extend as needed)
+# 25 nodes
 add_node(G, 1, "Connaught Place", 28.6315, 77.2167)
 add_node(G, 2, "Rajiv Chowk Metro", 28.6328, 77.2197)
 add_node(G, 3, "India Gate", 28.6129, 77.2295)
@@ -110,7 +110,7 @@ add_node(G, 25, "Pitampura", 28.7073, 77.1323)
 
 
 
-# ~~~~~           34 connections ~~~~~~~~~~~~~~~~~~~
+# ~~~~~    34 connections ~~~~~~~~~~~~~~~~~~~
 
 add_edge(G, 1, 2, 500,   9, 1, 2)
 add_edge(G, 1, 3, 2700,  8, 1, 3)
