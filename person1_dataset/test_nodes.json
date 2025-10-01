@@ -1,152 +1,17 @@
 [
-  {
-    "id": 1,
-    "name": "Connaught Place",
-    "lat": 28.6315,
-    "lon": 77.2167
-  },
-  {
-    "id": 2,
-    "name": "Rajiv Chowk Metro",
-    "lat": 28.6328,
-    "lon": 77.2197
-  },
-  {
-    "id": 3,
-    "name": "India Gate",
-    "lat": 28.6129,
-    "lon": 77.2295
-  },
-  {
-    "id": 4,
-    "name": "Chandni Chowk",
-    "lat": 28.6562,
-    "lon": 77.2301
-  },
-  {
-    "id": 5,
-    "name": "Red Fort",
-    "lat": 28.6562,
-    "lon": 77.241
-  },
-  {
-    "id": 6,
-    "name": "Karol Bagh",
-    "lat": 28.651,
-    "lon": 77.1907
-  },
-  {
-    "id": 7,
-    "name": "IIT Delhi",
-    "lat": 28.545,
-    "lon": 77.1926
-  },
-  {
-    "id": 8,
-    "name": "AIIMS Delhi",
-    "lat": 28.5672,
-    "lon": 77.21
-  },
-  {
-    "id": 9,
-    "name": "Lotus Temple",
-    "lat": 28.5535,
-    "lon": 77.2588
-  },
-  {
-    "id": 10,
-    "name": "Akshardham Temple",
-    "lat": 28.6127,
-    "lon": 77.2773
-  },
-  {
-    "id": 11,
-    "name": "JNU Campus",
-    "lat": 28.5402,
-    "lon": 77.1666
-  },
-  {
-    "id": 12,
-    "name": "Indira Gandhi International Airport",
-    "lat": 28.5562,
-    "lon": 77.1
-  },
-  {
-    "id": 13,
-    "name": "Qutub Minar",
-    "lat": 28.5245,
-    "lon": 77.1855
-  },
-  {
-    "id": 14,
-    "name": "Sarojini Nagar Market",
-    "lat": 28.5754,
-    "lon": 77.1996
-  },
-  {
-    "id": 15,
-    "name": "Delhi University North Campus",
-    "lat": 28.6886,
-    "lon": 77.21
-  },
-  {
-    "id": 16,
-    "name": "Lajpat Nagar",
-    "lat": 28.5678,
-    "lon": 77.251
-  },
-  {
-    "id": 17,
-    "name": "Hauz Khas Village",
-    "lat": 28.5495,
-    "lon": 77.2016
-  },
-  {
-    "id": 18,
-    "name": "Connaught Place Outer Circle",
-    "lat": 28.632,
-    "lon": 77.219
-  },
-  {
-    "id": 19,
-    "name": "Saket Mall",
-    "lat": 28.524,
-    "lon": 77.2125
-  },
-  {
-    "id": 20,
-    "name": "Rajouri Garden",
-    "lat": 28.6442,
-    "lon": 77.1195
-  },
-  {
-    "id": 21,
-    "name": "Green Park",
-    "lat": 28.5712,
-    "lon": 77.208
-  },
-  {
-    "id": 22,
-    "name": "Vasant Kunj",
-    "lat": 28.5525,
-    "lon": 77.166
-  },
-  {
-    "id": 23,
-    "name": "Dwarka Sector 21",
-    "lat": 28.5863,
-    "lon": 77.0417
-  },
-  {
-    "id": 24,
-    "name": "Nehru Place",
-    "lat": 28.5492,
-    "lon": 77.2596
-  },
-  {
-    "id": 25,
-    "name": "Pitampura",
-    "lat": 28.7073,
-    "lon": 77.1323
-  }
+  {"id": "A", "name": "Crossroad A"},
+  {"id": "B", "name": "Park Entrance"},
+  {"id": "C", "name": "Mall Entrance"},
+  {"id": "D", "name": "Metro Station"},
+  {"id": "E", "name": "School Gate"},
+  {"id": "F", "name": "Hospital Entrance"},
+  {"id": "G", "name": "Library Corner"},
+  {"id": "H", "name": "Police Station"},
+  {"id": "I", "name": "Bus Stop"},
+  {"id": "J", "name": "Community Center"},
+  {"id": "K", "name": "Market Square"},
+  {"id": "L", "name": "Residential Block A"},
+  {"id": "M", "name": "Residential Block B"},
+  {"id": "N", "name": "Sports Ground"},
+  {"id": "O", "name": "Temple Entrance"}
 ]
