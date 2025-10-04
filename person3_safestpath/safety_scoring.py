@@ -63,7 +63,7 @@ TIME_MULTIPLIERS = {
 # ---------------------------
 # Internal helpers
 # ---------------------------
-def _safe_get(d, *keys, default=None):
+def safe_get(d, *keys, default=None):
     """Return first existing key in dict d or default."""
     if d is None:
         return default
@@ -72,7 +72,7 @@ def _safe_get(d, *keys, default=None):
             return d[k]
     return default
 
-def _normalize_basic(attrs, caps=None):
+def normalisation(attrs, caps=None):
     """
     Normalize attribute dictionary (flat attr names) to 0..1.
     Expected input keys (if present): distance_m, lighting, CCTV, crime,
@@ -83,13 +83,13 @@ def _normalize_basic(attrs, caps=None):
     caps = caps or DEFAULT_CAPS
     res = {}
 
-    dist = float(_safe_get(attrs, "distance_m", "distance", 0.0))
+    dist = floaf safe_get(attrs, "distance_m", "distance", 0.0))
     res["dist_norm"] = min(max(dist, 0.0), caps["distance_cap"]) / caps["distance_cap"]
 
-    lighting = float(_safe_get(attrs, "lighting", 5.0))
+    lighting = floaf safe_get(attrs, "lighting", 5.0))
     res["lighting_norm"] = min(max(lighting, 0.0), 10.0) / 10.0
 
-    cctv_raw = _safe_get(attrs, "CCTV", "cctv", 0)
+    cctv_raw f safe_get(attrs, "CCTV", "cctv", 0)
     # interpret small ints 0/1 or scale 0-10
     try:
         cctv_raw = float(cctv_raw)
@@ -100,30 +100,30 @@ def _normalize_basic(attrs, caps=None):
     else:
         res["cctv_norm"] = max(0.0, min(cctv_raw, 10.0)) / 10.0
 
-    crime = float(_safe_get(attrs, "crime", 0.0))
+    crime = floaf safe_get(attrs, "crime", 0.0))
     res["crime_norm"] = min(max(crime, 0.0), 10.0) / 10.0
 
-    traffic = float(_safe_get(attrs, "traffic_density", "traffic", 0.0))
+    traffic = floaf safe_get(attrs, "traffic_density", "traffic", 0.0))
     res["traffic_norm"] = min(max(traffic, 0.0), 10.0) / 10.0
 
-    crowd = float(_safe_get(attrs, "crowd_density", "crowd", 0.0))
+    crowd = floaf safe_get(attrs, "crowd_density", "crowd", 0.0))
     res["crowd_norm"] = min(max(crowd, 0.0), 10.0) / 10.0
 
-    acc = float(_safe_get(attrs, "accidents_reported", "accidents", 0.0))
+    acc = floaf safe_get(attrs, "accidents_reported", "accidents", 0.0))
     res["acc_norm"] = min(max(acc, 0.0), caps["accidents_cap"]) / caps["accidents_cap"]
 
-    stray = float(_safe_get(attrs, "stray_animals", 0.0))
+    stray = floaf safe_get(attrs, "stray_animals", 0.0))
     res["stray_norm"] = min(max(stray, 0.0), 10.0) / 10.0
 
-    roadcond = float(_safe_get(attrs, "road_condition", 7.0))
+    roadcond = floaf safe_get(attrs, "road_condition", 7.0))
     res["roadcond_norm"] = min(max(roadcond, 0.0), 10.0) / 10.0
 
-    police_m = float(_safe_get(attrs, "nearest_police_m", "nearest_police_distance_m", caps["police_cap"]))
+    police_m = floaf safe_get(attrs, "nearest_police_m", "nearest_police_distance_m", caps["police_cap"]))
     res["police_norm"] = 1.0 - min(max(police_m, 0.0), caps["police_cap"]) / caps["police_cap"]
 
     return res
 
-def _crowd_risk(crowd_norm):
+def crowd_risk(crowd_norm):
     """Map crowd_norm (0..1) to risk (0..1): low crowd -> high risk; moderate -> low risk; huge crowd -> moderate risk."""
     if crowd_norm < 0.2:
         return 1.0
@@ -136,14 +136,14 @@ def _crowd_risk(crowd_norm):
 # ---------------------------
 # Core computation
 # ---------------------------
-def compute_edge_weight(attrs,
+def calc_edgeW(attrs,
                         mode="walking",
                         time_of_day="day",
                         caps=None,
                         verbose=False):
     """
     Compute safety weight (0..1, higher = more unsafe) for a flat attributes dict.
-    attrs: dictionary with (optional) keys used in _normalize_basic
+    attrs: dictionary with (optional) keys used in normalisation
     mode: 'walking', 'two_wheeler', 'car'
     time_of_day: 'morning', 'day', 'evening', 'night'
     """
@@ -151,7 +151,7 @@ def compute_edge_weight(attrs,
     mode = mode if mode in PRESET_COEFFS else "walking"
     time_of_day = time_of_day if time_of_day in TIME_MULTIPLIERS else "day"
 
-    norms = _normalize_basic(attrs, caps=caps)
+    norms = normalisation(attrs, caps=caps)
     crowd_risk = _crowd_risk(norms["crowd_norm"])
 
     # copy preset coeffs and apply time multipliers
@@ -200,7 +200,7 @@ def compute_edge_weight(attrs,
 # ---------------------------
 # JSON wrapper: use your 'modes->mode->time' structure
 # ---------------------------
-def compute_edge_weight_from_json(edge_json, mode="walking", time_of_day="day", caps=None, verbose=False):
+def calc_edgeW_from_json(edge_json, mode="walking", time_of_day="day", caps=None, verbose=False):
     """
     edge_json expected structure:
     {
@@ -234,12 +234,12 @@ def compute_edge_weight_from_json(edge_json, mode="walking", time_of_day="day", 
         base_attrs["distance_m"] = edge_json.get("distance_m", 0.0)
 
     # call flat compute
-    return compute_edge_weight(base_attrs, mode=mode, time_of_day=time_of_day, caps=caps, verbose=verbose)
+    return calc_edgeW(base_attrs, mode=mode, time_of_day=time_of_day, caps=caps, verbose=verbose)
 
 # ---------------------------
 # NetworkX helper and batch functions
 # ---------------------------
-def compute_all_edge_weights_networkx(G, mode="walking", time_of_day="day", caps=None, distance_key="distance_m", set_attr_name="safety_weight"):
+def calc_edgeW_from_netGX(G, mode="walking", time_of_day="day", caps=None, distance_key="distance_m", set_attr_name="safety_weight"):
     """
     Compute safety weight for all edges in a networkx Graph G and set attribute
     G[u][v][set_attr_name] = weight.
@@ -258,20 +258,20 @@ def compute_all_edge_weights_networkx(G, mode="walking", time_of_day="day", caps
         try:
             # if it has 'modes' key it's likely the edge_json format
             if "modes" in data:
-                w = compute_edge_weight_from_json(data, mode=mode, time_of_day=time_of_day, caps=caps)
+                w = calc_edgeW_from_json(data, mode=mode, time_of_day=time_of_day, caps=caps)
             else:
                 # flatten: copy data and ensure distance key naming
                 flat = dict(data)
                 if distance_key in data and "distance_m" not in flat:
                     flat["distance_m"] = data[distance_key]
-                w = compute_edge_weight(flat, mode=mode, time_of_day=time_of_day, caps=caps)
+                w = calc_edgeW(flat, mode=mode, time_of_day=time_of_day, caps=caps)
         except Exception:
             # fallback: safe default
             w = 1.0
         G[u][v][set_attr_name] = w
     return G
 
-def compute_all_edge_weights_from_edges_list(edges_list, mode="walking", time_of_day="day", caps=None):
+def calc_all_edges_fromL(edges_list, mode="walking", time_of_day="day", caps=None):
     """
     edges_list: list of edge_json dicts (as loaded from edges.json)
     returns: list of tuples (index, edge_id_or_uv, weight)
@@ -279,14 +279,14 @@ def compute_all_edge_weights_from_edges_list(edges_list, mode="walking", time_of
     caps = caps or DEFAULT_CAPS
     out = []
     for i, e in enumerate(edges_list):
-        w = compute_edge_weight_from_json(e, mode=mode, time_of_day=time_of_day, caps=caps)
+        w = calc_edgeW_from_json(e, mode=mode, time_of_day=time_of_day, caps=caps)
         out.append((i, (e.get("u", e.get("source_id")), e.get("v", e.get("target_id"))), w))
     return out
 
 # ---------------------------
 # Path scoring helper
 # ---------------------------
-def compute_path_safety(graph_like, path, weight_attr="safety_weight", distance_attr="distance_m"):
+def calc_path_safety(graph_like, path, weight_attr="safety_weight", distance_attr="distance_m"):
     """
     Compute total safety weight (sum) and total distance for a given path (list of nodes).
     graph_like can be networkx.Graph or adjacency dict {u: {v: {attrs}}}.
@@ -320,7 +320,7 @@ def compute_path_safety(graph_like, path, weight_attr="safety_weight", distance_
         w = attrs.get(weight_attr)
         if w is None:
             # compute on the fly from attrs (best effort)
-            w = compute_edge_weight(attrs)
+            w = calc_edgeW(attrs)
 
         d = attrs.get(distance_attr) or attrs.get("distance") or attrs.get("distance_m") or 0.0
         total_w += float(w)
@@ -355,14 +355,14 @@ if __name__ == "__main__":
     }
 
     print("Demo weights for demo_edge:")
-    w_walking_night, dbg = compute_edge_weight_from_json(demo_edge, mode="walking", time_of_day="night", verbose=True)
+    w_walking_night, dbg = calc_edgeW_from_json(demo_edge, mode="walking", time_of_day="night", verbose=True)
     print("walking/night weight:", w_walking_night)
     print("debug:", dbg)
 
-    w_car_day = compute_edge_weight_from_json(demo_edge, mode="car", time_of_day="day")
+    w_car_day = calc_edgeW_from_json(demo_edge, mode="car", time_of_day="day")
     print("car/day weight:", w_car_day)
 
     # show batch example
     edges_list = [demo_edge]
-    print("Batch compute:", compute_all_edge_weights_from_edges_list(edges_list, mode="walking", time_of_day="night"))
+    print("Batch compute:", calc_all_edges_fromL(edges_list, mode="walking", time_of_day="night"))
 
