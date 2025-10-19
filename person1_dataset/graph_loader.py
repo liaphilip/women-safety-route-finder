@@ -1,7 +1,6 @@
 # graph_loader.py
-# Loads nodes.json (list of {id,name}) and edges.json (list with modes & distance_m)
-# Builds an undirected adjacency list: adj[node] -> list[(neighbor, edge_dict)]
-
+# Phase 2: Data Loading
+# Loads data/nodes.json and data/edges.json and builds adjacency list graph G.
 import json
 from typing import Dict, List, Tuple
 
@@ -18,15 +17,14 @@ def load_edges(path="data/edges.json") -> List[dict]:
     with open(path, "r", encoding="utf-8") as f:
         edges = json.load(f)
 
-    # Give every edge a stable id if not present: "u-v-i"
-    counter_map = {}
-    for i, e in enumerate(edges):
-        u, v = e["u"], e["v"]
+    # Ensure each edge has an 'id' and 'distance_m'
+    counter = {}
+    for e in edges:
+        u = e.get("u"); v = e.get("v")
         key = f"{u}-{v}"
-        counter_map[key] = counter_map.get(key, 0) + 1
+        counter[key] = counter.get(key, 0) + 1
         if "id" not in e:
-            e["id"] = f"{u}-{v}-{counter_map[key]}"
-        # Normalize field names
+            e["id"] = f"{u}-{v}-{counter[key]}"
         if "distance" in e and "distance_m" not in e:
             e["distance_m"] = e["distance"]
     return edges
@@ -41,17 +39,18 @@ def build_graph(nodes_path="data/nodes.json", edges_path="data/edges.json"):
     nodes = load_nodes(nodes_path)
     edges = load_edges(edges_path)
 
-    # initialize adjacency
     adj: Dict[str, List[Tuple[str, dict]]] = {nid: [] for nid in nodes}
-
     for e in edges:
-        u, v = e["u"], e["v"]
-        if u not in adj:
-            adj[u] = []
-        if v not in adj:
-            adj[v] = []
-        # Undirected graph: add both directions
+        u = e["u"]; v = e["v"]
+        if u not in adj: adj[u] = []
+        if v not in adj: adj[v] = []
+        # undirected
         adj[u].append((v, e))
         adj[v].append((u, e))
-
     return nodes, edges, adj
+
+# quick debug
+if __name__ == "__main__":
+    nodes, edges, adj = build_graph()
+    print("Nodes:", list(nodes.keys()))
+    print("Edges:", [e["id"] for e in edges][:10])
