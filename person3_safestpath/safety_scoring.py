@@ -1,5 +1,3 @@
-
-
 from copy import deepcopy
 
 # ---------------------------
@@ -83,13 +81,13 @@ def normalisation(attrs, caps=None):
     caps = caps or DEFAULT_CAPS
     res = {}
 
-    dist = floaf safe_get(attrs, "distance_m", "distance", 0.0))
+    dist = float(safe_get(attrs, "distance_m", "distance", 0.0))
     res["dist_norm"] = min(max(dist, 0.0), caps["distance_cap"]) / caps["distance_cap"]
 
-    lighting = floaf safe_get(attrs, "lighting", 5.0))
+    lighting = float(safe_get(attrs, "lighting", 5.0))
     res["lighting_norm"] = min(max(lighting, 0.0), 10.0) / 10.0
 
-    cctv_raw f safe_get(attrs, "CCTV", "cctv", 0)
+    cctv_raw = safe_get(attrs, "CCTV", "cctv", 0)
     # interpret small ints 0/1 or scale 0-10
     try:
         cctv_raw = float(cctv_raw)
@@ -100,25 +98,25 @@ def normalisation(attrs, caps=None):
     else:
         res["cctv_norm"] = max(0.0, min(cctv_raw, 10.0)) / 10.0
 
-    crime = floaf safe_get(attrs, "crime", 0.0))
+    crime = float(safe_get(attrs, "crime", 0.0))
     res["crime_norm"] = min(max(crime, 0.0), 10.0) / 10.0
 
-    traffic = floaf safe_get(attrs, "traffic_density", "traffic", 0.0))
+    traffic = float(safe_get(attrs, "traffic_density", "traffic", 0.0))
     res["traffic_norm"] = min(max(traffic, 0.0), 10.0) / 10.0
 
-    crowd = floaf safe_get(attrs, "crowd_density", "crowd", 0.0))
+    crowd = float(safe_get(attrs, "crowd_density", "crowd", 0.0))
     res["crowd_norm"] = min(max(crowd, 0.0), 10.0) / 10.0
 
-    acc = floaf safe_get(attrs, "accidents_reported", "accidents", 0.0))
+    acc = float(safe_get(attrs, "accidents_reported", "accidents", 0.0))
     res["acc_norm"] = min(max(acc, 0.0), caps["accidents_cap"]) / caps["accidents_cap"]
 
-    stray = floaf safe_get(attrs, "stray_animals", 0.0))
+    stray = float(safe_get(attrs, "stray_animals", 0.0))
     res["stray_norm"] = min(max(stray, 0.0), 10.0) / 10.0
 
-    roadcond = floaf safe_get(attrs, "road_condition", 7.0))
+    roadcond = float(safe_get(attrs, "road_condition", 7.0))
     res["roadcond_norm"] = min(max(roadcond, 0.0), 10.0) / 10.0
 
-    police_m = floaf safe_get(attrs, "nearest_police_m", "nearest_police_distance_m", caps["police_cap"]))
+    police_m = float(safe_get(attrs, "nearest_police_m", "nearest_police_distance_m", caps["police_cap"]))
     res["police_norm"] = 1.0 - min(max(police_m, 0.0), caps["police_cap"]) / caps["police_cap"]
 
     return res
@@ -152,7 +150,7 @@ def calc_edgeW(attrs,
     time_of_day = time_of_day if time_of_day in TIME_MULTIPLIERS else "day"
 
     norms = normalisation(attrs, caps=caps)
-    crowd_risk = _crowd_risk(norms["crowd_norm"])
+    crowd_risk_val = crowd_risk(norms["crowd_norm"])
 
     # copy preset coeffs and apply time multipliers
     coeffs = deepcopy(PRESET_COEFFS[mode])
@@ -177,7 +175,7 @@ def calc_edgeW(attrs,
     raw += coeffs.get("CCTV", 0.0) * (1.0 - norms["cctv_norm"])          # no CCTV increases risk
     raw += coeffs.get("crime", 0.0) * norms["crime_norm"]
     raw += coeffs.get("traffic", 0.0) * norms["traffic_norm"]
-    raw += coeffs.get("crowd", 0.0) * crowd_risk
+    raw += coeffs.get("crowd", 0.0) * crowd_risk_val
     raw += coeffs.get("accidents", 0.0) * norms["acc_norm"]
     raw += coeffs.get("stray", 0.0) * norms["stray_norm"]
     raw += coeffs.get("roadcond", 0.0) * (1.0 - norms["roadcond_norm"])   # bad road = risk
@@ -189,7 +187,7 @@ def calc_edgeW(attrs,
     if verbose:
         debug = {
             "norms": norms,
-            "crowd_risk": crowd_risk,
+            "crowd_risk": crowd_risk_val,
             "coeffs_norm": coeffs,
             "raw": raw,
             "weight": weight
@@ -365,4 +363,3 @@ if __name__ == "__main__":
     # show batch example
     edges_list = [demo_edge]
     print("Batch compute:", calc_all_edges_fromL(edges_list, mode="walking", time_of_day="night"))
-
