@@ -1,5 +1,6 @@
 # main.py
-# Phases 1,4,6,7,9: Input, constraint handling, safety analysis, user interaction loop, final output
+# Phases 1,4,6,7,9: Input, constraint handling (nodes only), safety analysis,
+# user interaction loop, final output
 from graph_loader import build_graph
 from safety_scoring import compute_edge_weight, DIST_CAP
 from pathfinder import dijkstra, yen_k_shortest, distance_map, summarize_route
@@ -28,22 +29,27 @@ def build_edge_weights(edges, mode, time_of_day):
         breakdowns[e["id"]] = bd
     return weights, breakdowns
 
-def prune_graph(adj, avoid_nodes, avoid_edges):
+def prune_graph_remove_nodes(adj, avoid_nodes_set):
+    """
+    Prune graph by removing nodes listed in avoid_nodes_set.
+    Returns a new adjacency dict that excludes those nodes and any edges incident on them.
+    """
     adj2 = {}
     for u, nbrs in adj.items():
-        if u in avoid_nodes:
+        if u in avoid_nodes_set:
             continue
-        adj2[u] = []
+        new_nbrs = []
         for v, e in nbrs:
-            if v in avoid_nodes or e["id"] in avoid_edges:
+            if v in avoid_nodes_set:
                 continue
-            adj2[u].append((v, e))
+            new_nbrs.append((v, e))
+        adj2[u] = new_nbrs
     return adj2
 
 def chain_must_pass(adj, start, must_pass_nodes, end, weight_map):
     """
     Chains several required nodes: start -> must1 -> must2 -> ... -> end
-    Returns combined nodes list, total cost, combined edges list, or None if any segment fails.
+    Returns combined nodes list, total cost, combined edges list, or (None, inf, None) if any segment fails.
     """
     seg_nodes = []
     seg_edges = []
@@ -63,31 +69,52 @@ def chain_must_pass(adj, start, must_pass_nodes, end, weight_map):
         cur = mp
     return seg_nodes, total_cost, seg_edges
 
-def display_route(title, nodes, cost, edges, breakdowns):
+def display_route(title, nodes, cost, edges, breakdowns, weight_kind="mixed"):
+    """
+    Improved display:
+      - shows distance in meters and safety score sum (dimensionless)
+      - weight_kind indicates which metric algorithm minimized
+    """
     if nodes is None:
         print(f"{title}: No route found.")
         return
-    print(f"{title}: {' -> '.join(nodes)}")
-    s = summarize_route(edges)
-    print(f"  Distance: {s['distance_m']} m | edges: {s['n_edges']} | total_cost: {cost:.3f}")
-    print("  Edge breakdown (edge_id: approximate safety contrib):")
+
+    total_distance = sum(int(e.get("distance_m", 0)) for e in edges)
+    total_safety = 0.0
     for e in edges:
         eid = e["id"]
         bd = breakdowns.get(eid, {})
-        # compute a readable sum of contribs
-        total_contrib = 0.0
         if isinstance(bd, dict):
-            for k,v in bd.items():
+            for k, v in bd.items():
                 if isinstance(v, dict) and "contrib" in v:
-                    total_contrib += float(v["contrib"])
-        print(f"    {eid} (dist {int(e.get('distance_m',0))}m) -> safety ≈ {total_contrib:.3f}")
+                    try:
+                        total_safety += float(v["contrib"])
+                    except:
+                        pass
+
+    print(f"{title}: {' -> '.join(nodes)}")
+    print(f"  Distance = {total_distance} m")
+    print(f"  Safety score (sum of edge safety weights) = {total_safety:.4f}")
+    if weight_kind == "distance":
+        print(f"  Algorithm total_cost (distance objective): {cost:.3f} m")
+    elif weight_kind == "safety":
+        print(f"  Algorithm total_cost (safety objective): {cost:.4f} (lower = safer)")
+    else:
+        print(f"  Algorithm total_cost (combined/mixed weights): {cost:.4f}")
+    print("  Edge contributions (approx safety contrib per edge):")
+    for e in edges:
+        eid = e["id"]
+        bd = breakdowns.get(eid, {})
+        contrib = 0.0
+        if isinstance(bd, dict):
+            for k, v in bd.items():
+                if isinstance(v, dict) and "contrib" in v:
+                    contrib += float(v["contrib"])
+        print(f"    {eid}: dist={int(e.get('distance_m',0))}m, safety_contrib={contrib:.4f}")
     print()
 
 def main_loop():
-    nodes, edges, adj = build_graph(
-        nodes_path="../person1_dataset/nodes.json", 
-        edges_path="../person1_dataset/edges.json"
-    )
+    nodes, edges, adj = build_graph()
     node_keys = sorted(nodes.keys())
     print("Nodes (id: name):")
     for k in node_keys:
@@ -102,19 +129,17 @@ def main_loop():
     # preset/custom (for now only preset available; hook for customization)
     weight_pref = ask_choice("Weight preference:", ["preset", "custom (not implemented)"])
 
-    # Optional constraints
+    # Optional constraints (nodes only)
     avoid_nodes_raw = ask_text("Avoid nodes (comma separated ids, or press Enter to skip): ")
     avoid_nodes = [x.strip() for x in avoid_nodes_raw.split(",") if x.strip()]
-    avoid_edges_raw = ask_text("Avoid edges (comma separated edge ids, or press Enter to skip): ")
-    avoid_edges = [x.strip() for x in avoid_edges_raw.split(",") if x.strip()]
     must_pass_raw = ask_text("Must-pass nodes in order (comma separated ids, or press Enter to skip): ")
     must_pass_nodes = [x.strip() for x in must_pass_raw.split(",") if x.strip()]
 
     # Data loaded -> Weight calc
     safety_map, breakdowns = build_edge_weights(edges, mode, time_of_day)
 
-    # Constraint handling: prune graph
-    adj_pruned = prune_graph(adj, set(avoid_nodes), set(avoid_edges))
+    # Constraint handling: prune graph by nodes only
+    adj_pruned = prune_graph_remove_nodes(adj, set(avoid_nodes))
 
     # Pathfinding Phase
     # 1) Shortest by distance (distance_map)
@@ -142,20 +167,20 @@ def main_loop():
 
     # Safety Analysis Phase & initial display
     print("\n--- Candidate Routes ---\n")
-    display_route("Shortest (distance only)", dpath_nodes, dpath_cost, dpath_edges, breakdowns)
-    display_route("Safest (safety only)", safe_nodes, safe_cost, safe_edges, breakdowns)
+    display_route("Shortest (distance only)", dpath_nodes, dpath_cost, dpath_edges, breakdowns, weight_kind="distance")
+    display_route("Safest (safety only)", safe_nodes, safe_cost, safe_edges, breakdowns, weight_kind="safety")
     print("Top balanced alternatives (safety + distance):")
     if not kpaths:
         print("  No balanced alternatives found.")
     else:
         for i, (nodes_i, cost_i, edges_i) in enumerate(kpaths, 1):
-            display_route(f"  Option {i}", nodes_i, cost_i, edges_i, breakdowns)
+            display_route(f"  Option {i}", nodes_i, cost_i, edges_i, breakdowns, weight_kind="mixed")
 
     # User interaction loop: accept / refine / exit
     while True:
         print("Options:")
         print("  1. Accept a route")
-        print("  2. Reject and add/remove constraints and recompute")
+        print("  2. Reject and update avoid/must-pass nodes and recompute")
         print("  3. Show breakdown for a specific edge")
         print("  4. Exit without accepting")
         choice = input("Choose (1-4): ").strip()
@@ -191,20 +216,17 @@ def main_loop():
                 continue
 
         elif choice == "2":
-            # allow user to update avoid/include and recompute
-            print("Update constraints and recompute.")
+            # update avoid nodes / must-pass nodes and recompute
+            print("Update node constraints and recompute.")
             avoid_nodes_raw = ask_text("Avoid nodes (comma separated ids, or press Enter to keep current): ")
             if avoid_nodes_raw.strip():
                 avoid_nodes = [x.strip() for x in avoid_nodes_raw.split(",") if x.strip()]
-            avoid_edges_raw = ask_text("Avoid edges (comma separated ids, or press Enter to keep current): ")
-            if avoid_edges_raw.strip():
-                avoid_edges = [x.strip() for x in avoid_edges_raw.split(",") if x.strip()]
             must_pass_raw = ask_text("Must-pass nodes in order (comma separated ids, or press Enter to keep current): ")
             if must_pass_raw.strip():
                 must_pass_nodes = [x.strip() for x in must_pass_raw.split(",") if x.strip()]
 
-            # prune and recompute (repeat earlier steps)
-            adj_pruned = prune_graph(adj, set(avoid_nodes), set(avoid_edges))
+            # prune and recompute
+            adj_pruned = prune_graph_remove_nodes(adj, set(avoid_nodes))
             dist_map = distance_map(adj_pruned)
             dpath_nodes, dpath_cost, dpath_edges = dijkstra(adj_pruned, start, end, dist_map)
             safe_nodes, safe_cost, safe_edges = dijkstra(adj_pruned, start, end, safety_map)
@@ -225,14 +247,14 @@ def main_loop():
 
             # show again
             print("\n--- Recomputed Candidate Routes ---\n")
-            display_route("Shortest (distance only)", dpath_nodes, dpath_cost, dpath_edges, breakdowns)
-            display_route("Safest (safety only)", safe_nodes, safe_cost, safe_edges, breakdowns)
+            display_route("Shortest (distance only)", dpath_nodes, dpath_cost, dpath_edges, breakdowns, weight_kind="distance")
+            display_route("Safest (safety only)", safe_nodes, safe_cost, safe_edges, breakdowns, weight_kind="safety")
             print("Top balanced alternatives (safety + distance):")
             if not kpaths:
                 print("  No balanced alternatives found.")
             else:
                 for i, (nodes_i, cost_i, edges_i) in enumerate(kpaths, 1):
-                    display_route(f"  Option {i}", nodes_i, cost_i, edges_i, breakdowns)
+                    display_route(f"  Option {i}", nodes_i, cost_i, edges_i, breakdowns, weight_kind="mixed")
             continue
 
         elif choice == "3":
@@ -257,4 +279,3 @@ def main_loop():
 
 if __name__ == "__main__":
     main_loop()
-
