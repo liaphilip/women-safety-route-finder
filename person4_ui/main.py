@@ -2,7 +2,8 @@
 # CLI glue: choose start/end, mode, time; compute safety weights; run shortest/safest/balanced.
 
 from graph_loader import build_graph
-from safety_scoring import compute_edge_weight, DIST_CAP
+# Corrected imports: aliased function name and imported DEFAULT_CAPS
+from safety_scoring import calc_edgeW_from_json as compute_edge_weight, DEFAULT_CAPS
 from pathfinder import dijkstra, yen_k_shortest, path_distance_weight_map, summarize_edges
 
 def ask_choice(prompt, options):
@@ -21,7 +22,9 @@ def build_safety_weight_map(edges, mode, time_of_day):
     wmap = {}
     breakdowns = {}
     for e in edges:
-        w, bd = compute_edge_weight(e, mode, time_of_day)
+        # Use the imported 'compute_edge_weight' which is an alias for 'calc_edgeW_from_json'
+        # Pass verbose=True to get the breakdown
+        w, bd = compute_edge_weight(e, mode, time_of_day, verbose=True)
         wmap[e["id"]] = w
         breakdowns[e["id"]] = bd
     return wmap, breakdowns
@@ -31,7 +34,8 @@ def combined_weight_map(adj, safety_map, dist_coeff=1.0):
     combined = {}
     dist_map = path_distance_weight_map(adj)
     for eid, s in safety_map.items():
-        d_norm = min(dist_map.get(eid, 0.0) / DIST_CAP, 1.0)
+        # Corrected to use the imported DEFAULT_CAPS dictionary
+        d_norm = min(dist_map.get(eid, 0.0) / DEFAULT_CAPS["distance_cap"], 1.0)
         combined[eid] = s + dist_coeff * d_norm
     return combined
 
@@ -45,11 +49,16 @@ def show_path(tag, nodes, cost, edges, breakdowns):
     print("  Edge contributions (safety total per edge):")
     for e in edges:
         eid = e["id"]
-        total = sum(v["contrib"] for k, v in breakdowns.get(eid, {}).items() if isinstance(v, dict) and "contrib" in v)
+        # Use the breakdown 'weight' which is the final safety score for that edge
+        total = breakdowns.get(eid, {}).get("weight", 0.0)
         print(f"    {eid}  dist={int(e.get('distance_m',0))}m  safety={total:.3f}")
 
 def main():
-    nodes, edges, adj = build_graph()
+    # Corrected: Provide relative paths from person4_ui/ to person1_dataset/
+    nodes, edges, adj = build_graph(
+        nodes_path="../person1_dataset/nodes.json",
+        edges_path="../person1_dataset/edges.json"
+    )
     node_ids = sorted(nodes.keys())
     print("Available nodes:", ", ".join(f"{nid}({nodes[nid]['name']})" for nid in node_ids))
 
