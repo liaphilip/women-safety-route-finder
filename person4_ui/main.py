@@ -84,7 +84,10 @@ def display_route(title, nodes, cost, edges, breakdowns):
     print()
 
 def main_loop():
-    nodes, edges, adj = build_graph()
+    nodes, edges, adj = build_graph(
+        nodes_path="../person1_dataset/nodes.json", 
+        edges_path="../person1_dataset/edges.json"
+    )
     node_keys = sorted(nodes.keys())
     print("Nodes (id: name):")
     for k in node_keys:
@@ -254,3 +257,4 @@ def main_loop():
 
 if __name__ == "__main__":
     main_loop()
+
