@@ -201,7 +201,6 @@ if HAVE_PLOTTING:
             data = G.get_edge_data(u, v, default={})
             edge_labels[(u, v)] = data.get("distance_m", "")
         nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=8)
-        plt.title("Balanced Path (Option 1) Highlighted")
         plt.axis("off")
         plt.tight_layout()
         plt.show()
@@ -328,12 +327,12 @@ def main_loop():
     show_candidates()
 
     # optional plot first balanced
-    if HAVE_PLOTTING and kpaths:
-        try:
-            first_nodes, _, _ = kpaths[0]
-            plot_path_highlight(nodes, edges, first_nodes)
-        except Exception as ex:
-            print("Plot warning:", ex)
+    #if HAVE_PLOTTING and kpaths:
+     #   try:
+      #      first_nodes, _, _ = kpaths[0]
+       #     plot_path_highlight(nodes, edges, first_nodes)
+        #except Exception as ex:
+         #   print("Plot warning:", ex)
 
     # Interaction loop (accept or recompute)
     while True:
@@ -367,6 +366,12 @@ def main_loop():
                         continue
                 print("\n=== FINAL ROUTE SELECTED ===")
                 display_route(chosen[0], chosen[1], chosen[2], chosen[3], breakdowns, weight_kind="mixed")
+                if HAVE_PLOTTING:
+                    try:
+                        plot_path_highlight(nodes, edges, chosen[1])
+                    except Exception as ex:
+                        print("Plot warning (accepted route):", ex)
+
                 print("Final route accepted. Exiting.")
                 return
             except Exception:
