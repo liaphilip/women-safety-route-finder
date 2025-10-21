@@ -1,8 +1,8 @@
 # safety_scoring.py
-# Phase 3: Weight Calculation
-# Normalizes attributes, applies mode presets and time multipliers, returns edge weight and breakdown.
+# Phase 3: Weight Calculation (updated to accept coeff_override)
 
 from typing import Tuple, Dict
+import copy
 
 DIST_CAP = 2000.0
 POLICE_CAP = 1500.0
@@ -63,13 +63,31 @@ def _get_mode_key(mode: str) -> str:
     if m in ("bike","bicycle","two-wheeler"): return "two_wheeler"
     return "walking"
 
-def compute_edge_weight(edge: dict, mode: str, time_of_day: str) -> Tuple[float, Dict]:
+def compute_edge_weight(edge: dict, mode: str, time_of_day: str, coeff_override: Dict[str, float]=None) -> Tuple[float, Dict]:
     """
-    Returns (weight, breakdown)
-    Lower weight == safer.
+    Returns (weight, breakdown).
+    coeff_override: optional dict mapping feature -> multiplier or absolute coeff.
+      If a key in coeff_override exists in preset, its value will replace the preset value.
+      If coeff_override value is a tuple/list like ("mul", 1.5) it will multiply the preset.
+      If it's a number, it will replace the preset coefficient.
     """
     mode_key = _get_mode_key(mode)
     time_slot = time_of_day if time_of_day in TIME_MULTS else ("night" if time_of_day=="night" else "day")
+
+    # copy coeffs so we don't modify global presets
+    coeffs = copy.deepcopy(MODE_PRESETS[mode_key])
+
+    # apply overrides (supports "lighting:2" meaning set to 2, or "lighting:mul:1.5")
+    if coeff_override:
+        for k, v in coeff_override.items():
+            try:
+                if isinstance(v, (list, tuple)) and len(v) == 2 and str(v[0]).lower() == "mul":
+                    coeffs[k] = coeffs.get(k, 0.0) * float(v[1])
+                else:
+                    coeffs[k] = float(v)
+            except Exception:
+                # ignore malformed override entries
+                pass
 
     # distance normalization
     dist_m = float(edge.get("distance_m", 0.0))
@@ -113,7 +131,6 @@ def compute_edge_weight(edge: dict, mode: str, time_of_day: str) -> Tuple[float,
         "parking_safety": 1.0 - parking_safety
     }
 
-    coeffs = MODE_PRESETS[mode_key]
     tms = TIME_MULTS[time_slot]
 
     total = 0.0
