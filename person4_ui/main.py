@@ -16,123 +16,123 @@ except Exception:
 # ---------- Helpers ----------
 
 def print_nodes_once(nodes):
-    print("Nodes (id: name):")
-    for i, k in enumerate(sorted(nodes.keys()), 1):
-        print(f"  {i}. {k}: {nodes[k]['name']}")
-    print()
+    # kept for compatibility; intentionally no-op
+    pass
 
-def parse_node_choice(user_input: str, nodes_sorted: list):
+def parse_node_choice(user_input: str, nodes_sorted: list, nodes_dict: dict):
+    """Parse user input into a node id.
+    Accepts:
+      - number (1-based index into nodes_sorted)
+      - exact node id (case-insensitive)
+      - exact location name (case-insensitive)
+      - prefix of location name (case-insensitive)
+    Returns node id string or None if not matched.
+    """
+    if user_input is None:
+        return None
     s = user_input.strip()
     if not s:
         return None
+
+    # number selection (1-based index)
     if s.isdigit():
         idx = int(s) - 1
         if 0 <= idx < len(nodes_sorted):
             return nodes_sorted[idx]
         return None
+
     s_up = s.upper()
-    for n in nodes_sorted:
-        if n.upper() == s_up:
-            return n
+
+    # exact match by node id
+    for nid in nodes_sorted:
+        if nid.upper() == s_up:
+            return nid
+
+    # exact match by node display name
+    for nid in nodes_sorted:
+        name = nodes_dict.get(nid, {}).get("name", "")
+        if name and name.strip().upper() == s_up:
+            return nid
+
+    # prefix match by node display name
+    matches = []
+    for nid in nodes_sorted:
+        name = nodes_dict.get(nid, {}).get("name", "")
+        if name and name.strip().upper().startswith(s_up):
+            matches.append(nid)
+
+    # if exactly one prefix match, return it; otherwise ambiguous -> None
+    if len(matches) == 1:
+        return matches[0]
     return None
 
-def ask_node(prompt: str, nodes_sorted: list):
-    while True:
-        user = input(prompt + " (enter id or number): ").strip()
-        node = parse_node_choice(user, nodes_sorted)
-        if node is None:
-            print("Invalid entry. Enter a valid node id (e.g. A) or its number from the list shown earlier.")
-            continue
-        return node
+def show_locations_friendly(nodes):
+    """Friendly list of available locations for the user to pick from."""
+    print("Available locations:")
+    for i, k in enumerate(sorted(nodes.keys()), 1):
+        name = nodes[k].get("name", k)
+        print(f"  {i}. {name}  (id: {k})")
+    print("Tip: you can type the number, the id (e.g. A) or the location name (or a prefix).")
+    print()
 
-def ask_choice_simple(prompt: str, options: list):
-    print(prompt)
-    for i, o in enumerate(options, 1):
-        print(f"  {i}. {o}")
-    sel = input("Choose number (or press Enter for 1): ").strip()
-    try:
-        idx = int(sel) - 1
-        return options[max(0, min(idx, len(options)-1))]
-    except:
-        return options[0]
+# small helper to convert minutes to HH:MM if needed
+def _format_minutes(m):
+    if m < 60:
+        return f"{int(round(m))} min"
+    h = int(m // 60)
+    rem = int(round(m % 60))
+    return f"{h}h {rem}m"
 
-def ask_text(prompt: str):
-    return input(prompt).strip()
+FRIENDLY_NAMES = {
+    "crime": "Crime",
+    "lighting": "Lighting",
+    "cctv": "CCTV coverage",
+    "crowd_density": "Crowd level",
+    "traffic_density": "Traffic level",
+    "accidents_reported": "Accident reports",
+    "road_condition": "Road condition",
+    "stray_animals": "Stray animals",
+    "nearest_police_m": "Distance to nearest police",
+    "sidewalk": "Sidewalk presence",
+    "shops_visibility": "Shops / visibility",
+    "traffic_behavior": "Driver behavior",
+    "parking_safety": "Parking safety",
+    "distance_penalty": "Distance penalty"
+}
 
-def detect_time_of_day():
-    now = datetime.now()
-    hour = now.hour
-    if 6 <= hour < 18:
-        tod = "day"
-    else:
-        tod = "night"
-    print(f"Detected current time: {now.strftime('%H:%M')} → Mode set to {tod.upper()}")
-    return tod
-
-def parse_coeff_overrides(text: str):
-    """
-    Parse strings like:
-      "lighting:2,cctv:1.5,crime:mul:1.2"
-    Returns dict feature -> value or ("mul", factor)
-    """
-    out = {}
-    if not text:
-        return out
-    parts = [p.strip() for p in text.split(",") if p.strip()]
-    for p in parts:
-        # formats:
-        # feat:value
-        # feat:mul:value
-        pieces = p.split(":")
-        if len(pieces) == 2:
-            feat, val = pieces
-            try:
-                out[feat.strip()] = float(val.strip())
-            except:
-                pass
-        elif len(pieces) == 3 and pieces[1].lower() == "mul":
-            feat = pieces[0].strip()
-            try:
-                val = float(pieces[2].strip())
-                out[feat] = ("mul", val)
-            except:
-                pass
+def _friendly_breakdown_print(bd):
+    if not isinstance(bd, dict):
+        print("  No breakdown available.")
+        return
+    for feat, val in bd.items():
+        name = FRIENDLY_NAMES.get(feat, feat)
+        if isinstance(val, dict):
+            risk = val.get("risk", 0.0)
+            contrib = val.get("contrib", 0.0)
+            coeff = val.get("coeff", "")
+            # present risk as percent for layman
+            print(f"  - {name}: risk {round(risk*100)}%  |  impact {round(contrib,4)} (coeff {coeff})")
         else:
-            # ignore malformed
-            pass
-    return out
+            print(f"  - {name}: {val}")
 
-def build_edge_weights_with_overrides(edges, mode, time_of_day, coeff_override):
-    weights = {}
-    breakdowns = {}
-    for e in edges:
-        w, bd = compute_edge_weight(e, mode, time_of_day, coeff_override)
-        weights[e["id"]] = w
-        breakdowns[e["id"]] = bd
-    return weights, breakdowns
-
-def prune_graph_remove_nodes(adj, avoid_nodes_set):
-    adj2 = {}
-    for u, nbrs in adj.items():
-        if u in avoid_nodes_set:
-            continue
-        new_nbrs = []
-        for v, e in nbrs:
-            if v in avoid_nodes_set:
-                continue
-            new_nbrs.append((v, e))
-        adj2[u] = new_nbrs
-    return adj2
-
-def display_route(title, nodes, cost, edges, breakdowns, weight_kind="mixed"):
-    if nodes is None:
+def display_route(title, nodes_seq, cost, edges, breakdowns, mode="walking", weight_kind="mixed"):
+    """More user-friendly route summary with ETA and plain-language safety info."""
+    if nodes_seq is None:
         print(f"{title}: No route found.")
         return
 
+    # total distance
     total_distance = sum(int(e.get("distance_m", 0)) for e in edges)
+
+    # estimate travel time by mode (simple average speeds)
+    speed_kmh = {"walking": 5.0, "two_wheeler": 20.0, "car": 40.0}
+    sp = speed_kmh.get(mode, 5.0)
+    est_minutes = (total_distance / 1000.0) / sp * 60.0
+
+    # interpret safety: lower total contrib -> safer
     total_safety = 0.0
     for e in edges:
-        eid = e["id"]
+        eid = e.get("id")
         bd = breakdowns.get(eid, {})
         if isinstance(bd, dict):
             for k, v in bd.items():
@@ -142,15 +142,17 @@ def display_route(title, nodes, cost, edges, breakdowns, weight_kind="mixed"):
                     except:
                         pass
 
-    print(f"{title}: {' -> '.join(nodes)}")
-    print(f"  Distance = {total_distance} m")
-    print(f"  Safety score (sum of edge safety weights) = {total_safety:.4f}")
+    safety_msg = "safer" if total_safety < 5 else ("moderately safe" if total_safety < 12 else "less safe")
+    print(f"{title}")
+    print(f"  Route: {' → '.join(nodes_seq)}")
+    print(f"  Distance: {total_distance} m   •   Est. travel time: {_format_minutes(est_minutes)} ({mode})")
+    print(f"  Safety summary: {safety_msg}  (score: {total_safety:.3f}; lower is safer)")
     if weight_kind == "distance":
-        print(f"  Algorithm total_cost (distance objective): {cost:.3f} m")
+        print(f"  Objective used: shortest distance (meters). Algorithm cost = {cost:.3f}")
     elif weight_kind == "safety":
-        print(f"  Algorithm total_cost (safety objective): {cost:.4f} (lower = safer)")
+        print(f"  Objective used: safety-first. Algorithm cost = {cost:.4f} (lower = safer)")
     else:
-        print(f"  Algorithm total_cost (combined/mixed weights): {cost:.4f}")
+        print(f"  Objective used: balanced (safety + distance). Algorithm cost = {cost:.4f}")
     print()
 
 # ---------- (optional) plotting helpers if available ----------
@@ -206,6 +208,25 @@ if HAVE_PLOTTING:
         plt.show()
 
 # ---------- Main loop (with interaction + custom weight handling) ----------
+def ask_choice(prompt, options):
+    """Ask user to choose from a list of options."""
+    while True:
+        print(f"{prompt}")
+        for i, opt in enumerate(options, 1):
+            print(f"  {i}. {opt}")
+        choice = input("Choose (number): ").strip()
+        try:
+            idx = int(choice) - 1
+            if 0 <= idx < len(options):
+                return options[idx]
+        except ValueError:
+            pass
+        print("Invalid choice. Please try again.")
+
+# small helper: simpler variant that accepts a default label list
+def ask_choice_simple(prompt, options):
+    return ask_choice(prompt, options)
+
 def chain_must_pass(adj, start, must_pass_nodes, end, weight_map):
     """
     Computes a route that passes through all 'must_pass_nodes' in the given order.
@@ -236,6 +257,90 @@ def chain_must_pass(adj, start, must_pass_nodes, end, weight_map):
 
     return seg_nodes, total_cost, seg_edges
 
+def ask_node(prompt, nodes_sorted, nodes_dict):
+    """Ask user to select a node and return the node id."""
+    while True:
+        user_input = input(f"{prompt} ").strip()
+        if not user_input:
+            continue
+        nid = parse_node_choice(user_input, nodes_sorted, nodes_dict)
+        if nid:
+            return nid
+        print("Location not found. Please try again or type 'list' to show available locations.")
+        if user_input.lower() == "list":
+            print()
+            show_locations_friendly(nodes_dict)
+
+def ask_text(prompt):
+    return input(f"{prompt} ").strip()
+
+def detect_time_of_day():
+    """Simple day/night detector based on hour."""
+    h = datetime.now().hour
+    return "day" if 7 <= h < 19 else "night"
+
+def parse_coeff_overrides(raw: str):
+    """
+    Parse string like "lighting:2,cctv:mul:1.5,crime:3" into dict.
+    Values are either float or ("mul", float) tuples.
+    Malformed entries are ignored.
+    """
+    out = {}
+    if not raw:
+        return out
+    for part in raw.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        segs = part.split(":")
+        try:
+            if len(segs) == 3 and segs[1].lower() == "mul":
+                out[segs[0].strip()] = ("mul", float(segs[2]))
+            elif len(segs) == 2:
+                out[segs[0].strip()] = float(segs[1])
+            else:
+                # try simple "key=value" or single number
+                if "=" in part:
+                    k, v = part.split("=", 1)
+                    out[k.strip()] = float(v)
+        except Exception:
+            # ignore malformed piece
+            continue
+    return out
+
+def build_edge_weights_with_overrides(edges, mode, time_of_day, coeff_override):
+    """
+    Returns (safety_map, breakdowns)
+    safety_map: edge_id -> weight (float)
+    breakdowns: edge_id -> breakdown dict returned from compute_edge_weight
+    """
+    safety_map = {}
+    breakdowns = {}
+    for e in edges:
+        eid = e.get("id")
+        if not eid:
+            continue
+        w, bd = compute_edge_weight(e, mode, time_of_day, coeff_override)
+        safety_map[eid] = float(w)
+        breakdowns[eid] = bd
+    return safety_map, breakdowns
+
+def prune_graph_remove_nodes(adj, avoid_set):
+    """Return a new adjacency dict without nodes in avoid_set and without edges to them."""
+    avoid_set = set(avoid_set or [])
+    new_adj = {}
+    for n, nbrs in adj.items():
+        if n in avoid_set:
+            continue
+        new_nbrs = []
+        for v, e in nbrs:
+            if v in avoid_set:
+                continue
+            # skip edges that reference removed nodes
+            new_nbrs.append((v, e))
+        new_adj[n] = new_nbrs
+    return new_adj
+
 def main_loop():
     nodes, edges, adj = build_graph()
     nodes_sorted = sorted(nodes.keys())
@@ -247,41 +352,41 @@ def main_loop():
         except Exception as ex:
             print("Plot warning:", ex)
 
-    print_nodes_once(nodes)
+    show_locations_friendly(nodes)
 
     # pick start/end
-    start = ask_node("Select START node", nodes_sorted)
-    end = ask_node("Select END node", nodes_sorted)
+    start = ask_node("Where are you starting from?", nodes_sorted, nodes)
+    end = ask_node("Where would you like to go?", nodes_sorted, nodes)
     while end == start:
-        print("END cannot be the same as START. Choose a different END node.")
-        end = ask_node("Select END node", nodes_sorted)
+        print("Destination cannot be the same as your starting point. Please choose a different destination.")
+        end = ask_node("Where would you like to go?", nodes_sorted, nodes)
 
-    mode = ask_choice_simple("Select mode:", ["walking", "two_wheeler", "car"])
+    mode = ask_choice("How will you travel?", ["walking", "two_wheeler", "car"])
 
     time_of_day = detect_time_of_day()
 
     # Ask whether to use preset or custom weight importance
-    wp = ask_choice_simple("Weight preference:", ["preset", "custom"])
+    wp = ask_choice("Do you want the default route preferences or custom importance?", ["preset", "custom"])
     coeff_override = {}
     if wp == "custom":
-        print("Enter custom importance overrides as comma separated pairs.")
-        print("Format examples:")
-        print("  lighting:2  -> sets coefficient for lighting to 2")
-        print("  cctv:mul:1.5 -> multiplies preset cctv coeff by 1.5")
+        print("Enter custom importance overrides to emphasize or reduce specific concerns.")
+        print("Examples:")
+        print("  lighting:2           (make lighting twice as important)")
+        print("  cctv:mul:1.5         (increase CCTV importance by 50%)")
         print("  lighting:2,cctv:mul:1.5,crime:3")
-        raw = ask_text("Enter overrides (or press Enter to cancel): ")
+        raw = ask_text("Type overrides (or press Enter to skip): ")
         coeff_override = parse_coeff_overrides(raw)
 
-    avoid_nodes_raw = ask_text("Avoid nodes (comma separated ids, or press Enter to skip): ")
+    avoid_nodes_raw = ask_text("Any locations to avoid? (enter ids, comma separated, or press Enter to skip): ")
     avoid_nodes = [x.strip() for x in avoid_nodes_raw.split(",") if x.strip()]
     if start in avoid_nodes:
-        print(f"Note: Start node '{start}' was in avoid list — removing it.")
+        print(f"Note: Start location '{start}' was in your avoid list — it has been removed.")
         avoid_nodes.remove(start)
     if end in avoid_nodes:
-        print(f"Note: End node '{end}' was in avoid list — removing it.")
+        print(f"Note: Destination '{end}' was in your avoid list — it has been removed.")
         avoid_nodes.remove(end)
 
-    must_pass_raw = ask_text("Must-pass nodes in order (comma separated ids, or press Enter to skip): ")
+    must_pass_raw = ask_text("Any mandatory stops along the way? (ids, in order, comma separated; press Enter to skip): ")
     must_pass_nodes = [x.strip() for x in must_pass_raw.split(",") if x.strip()]
 
     # compute weights with possible overrides
@@ -306,33 +411,33 @@ def main_loop():
         try:
             chain_nodes, chain_cost, chain_edges = chain_must_pass(adj_pruned, start, must_pass_nodes, end, combined_map)
             if chain_nodes is None:
-                print("Could not compute route obeying must-pass constraints.")
+                print("Could not compute a route that visits all mandatory stops in the requested order.")
             else:
-                print("\n--- Route satisfying must-pass nodes ---")
-                display_route("Must-pass route", chain_nodes, chain_cost, chain_edges, breakdowns, weight_kind="mixed")
+                print("\n--- Route satisfying required stops ---")
+                display_route("Route with required stops", chain_nodes, chain_cost, chain_edges, breakdowns, mode=mode, weight_kind="mixed")
         except Exception:
             pass
 
     # display candidate routes
     def show_candidates():
-        print("\n--- Candidate Routes ---\n")
-        display_route("Shortest (distance only)", dpath_nodes, dpath_cost, dpath_edges, breakdowns, weight_kind="distance")
-        display_route("Safest (safety only)", safe_nodes, safe_cost, safe_edges, breakdowns, weight_kind="safety")
-        print("Top balanced alternatives (safety + distance):")
+        print("\n--- Suggested routes for you ---\n")
+        display_route("Quickest option", dpath_nodes, dpath_cost, dpath_edges, breakdowns, mode=mode, weight_kind="distance")
+        display_route("Safest option", safe_nodes, safe_cost, safe_edges, breakdowns, mode=mode, weight_kind="safety")
+        print("Balanced alternatives (safety + distance):")
         if not kpaths:
             print("  No balanced alternatives found.")
         else:
             for i, (nodes_i, cost_i, edges_i) in enumerate(kpaths, 1):
-                display_route(f"  Option {i}", nodes_i, cost_i, edges_i, breakdowns, weight_kind="mixed")
+                display_route(f"  Option {i}", nodes_i, cost_i, edges_i, breakdowns, mode=mode, weight_kind="mixed")
     show_candidates()
 
     # optional plot first balanced
-    #if HAVE_PLOTTING and kpaths:
-     #   try:
-      #      first_nodes, _, _ = kpaths[0]
-       #     plot_path_highlight(nodes, edges, first_nodes)
-        #except Exception as ex:
-         #   print("Plot warning:", ex)
+    # if HAVE_PLOTTING and kpaths:
+    #     try:
+    #         first_nodes, _, _ = kpaths[0]
+    #         plot_path_highlight(nodes, edges, first_nodes)
+    #     except Exception as ex:
+    #         print("Plot warning:", ex)
 
     # Interaction loop (accept or recompute)
     while True:
@@ -432,11 +537,7 @@ def main_loop():
                 print("Edge id not found in breakdowns.")
             else:
                 print(f"Breakdown for edge {eid}:")
-                for k, v in bd.items():
-                    if isinstance(v, dict):
-                        print(f"  {k}: risk={v.get('risk')}, coeff={v.get('coeff')}, time_mult={v.get('time_mult')}, contrib={v.get('contrib')}")
-                    else:
-                        print(f"  {k}: {v}")
+                _friendly_breakdown_print(bd)
             continue
 
         elif choice == "4":
