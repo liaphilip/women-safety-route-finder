@@ -14,18 +14,13 @@ A route planning system that prioritizes safety of many individuals by consideri
 - **Custom Safety Preferences**: Adjust importance weights for different safety factors
 - **Constraint Support**: 
   - can avoid specific locations
-  - can choose important attributes
-  - can proritize specific routes 
+  - can choose important attributes 
 - **Visual Route Display**: Interactive graph visualization with matplotlib
-
-## * Quick Start
 
 ### Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/women-safety-router.git
-cd women-safety-router
+
 
 # Create virtual environment (recommended)
 python -m venv venv
@@ -39,14 +34,10 @@ pip install matplotlib
 
 ### Basic Usage
 
-```bash
-python -m src.ui.cli
-```
-
 Follow the interactive prompts to:
 1. Select start and destination points
 2. Choose transportation mode
-3. Set time of day (auto-detected)
+3. Auto detects time of day 
 4. Optionally customize safety preferences
 5. Review and select from multiple route options
 
@@ -111,7 +102,9 @@ Each route segment (edge) is evaluated based on:
 ### *Algorithm
 
 1. **Graph Construction**: Locations (nodes) and paths (edges) with safety attributes
-2. **Weight Calculation**: Multi-factor safety score for each edge based on mode and time
+2. **Weight Calculation**: Multi-factor safety score for each edge is calculated
+   Final weight is computed as:
+weight = Σ (risk × coefficient × time_multiplier) + distance_penalty
 3. **Path Finding**: 
    - Dijkstra's algorithm for single optimal path
    - Yen's K-shortest paths for alternatives
@@ -144,22 +137,6 @@ Set importance for each factor:
   Lighting (preset coeff 2.20) => enter 0.0-1.0: 1.0
   CCTV coverage (preset coeff 1.60) => enter 0.0-1.0: 0.6
   ...
-```
-
-### Dynamic Updates
-
-Create `data/dynamic.json` to override safety attributes in real-time:
-
-```json
-{
-  "edges": {
-    "A-B": {
-      "cctv": 0,
-      "lighting": 3,
-      "crime": 5
-    }
-  }
-}
 ```
 
 ## * Data Format
@@ -197,19 +174,6 @@ Create `data/dynamic.json` to override safety attributes in real-time:
     }
   }
 ]
-```
-
-## * Testing
-
-```bash
-# Run all tests
-python -m pytest tests/
-
-# Run specific test module
-python -m pytest tests/test_pathfinder.py
-
-# Run with coverage
-python -m pytest --cov=src tests/
 ```
 
 ## * Requirements
