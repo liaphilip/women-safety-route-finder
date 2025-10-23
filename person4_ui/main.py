@@ -1,10 +1,11 @@
 # main.py
 # CLI with accept/recompute loop and custom-weight input handling
 from graph_loader import build_graph
-from safety_scoring import compute_edge_weight, DIST_CAP
+from safety_scoring import compute_edge_weight, DIST_CAP, MODE_PRESETS
 from pathfinder import dijkstra, yen_k_shortest, distance_map
 from datetime import datetime
 import copy
+import json, os
 
 try:
     import matplotlib.pyplot as plt
@@ -283,7 +284,7 @@ def parse_coeff_overrides(raw: str):
     """
     Parse string like "lighting:2,cctv:mul:1.5,crime:3" into dict.
     Values are either float or ("mul", float) tuples.
-    Malformed entries are ignored.
+    We ignore invalid entries
     """
     out = {}
     if not raw:
@@ -299,12 +300,10 @@ def parse_coeff_overrides(raw: str):
             elif len(segs) == 2:
                 out[segs[0].strip()] = float(segs[1])
             else:
-                # try simple "key=value" or single number
                 if "=" in part:
                     k, v = part.split("=", 1)
                     out[k.strip()] = float(v)
         except Exception:
-            # ignore malformed piece
             continue
     return out
 
@@ -341,6 +340,83 @@ def prune_graph_remove_nodes(adj, avoid_set):
         new_adj[n] = new_nbrs
     return new_adj
 
+def ask_custom_importance(mode_key: str):
+    """
+    Prompt user to set importance weights (0..1) for every attribute in MODE_PRESETS[mode_key].
+    These are importance multipliers only (do NOT modify raw edge data).
+    We apply the multiplier to the preset coefficient: final_coeff = preset_coeff * user_weight.
+    Returns a dict feature -> absolute coeff (float) suitable for compute_edge_weight overrides.
+    """
+    presets = MODE_PRESETS.get(mode_key, {})
+    if not presets:
+        print("No presets for mode; using defaults.")
+        presets = {}
+
+    print("\nSet importance for each factor on a 0.0 (ignore) to 1.0 (full) scale.")
+    print("Press Enter to keep the default importance (1.0).\n")
+
+    overrides = {}
+    for key, base_coeff in presets.items():
+        friendly = FRIENDLY_NAMES.get(key, key)
+        # show current normalized to 1.0 meaning keep full preset
+        raw = input(f"  {friendly} (default shown as 1.00, preset coeff {base_coeff:.2f}) => enter 0.0-1.0 or Enter: ").strip()
+        if raw == "":
+            continue
+        try:
+            val = float(raw)
+            if not (0.0 <= val <= 1.0):
+                print("    Value must be between 0 and 1 — skipping.")
+                continue
+            # convert normalized to absolute coeff by scaling preset coefficient
+            overrides[key] = float(base_coeff * val)
+        except Exception:
+            print("    Invalid number — skipping.")
+            continue
+
+    if overrides:
+        print("\nApplied importance overrides (these adjust weighting only):")
+        for k, v in overrides.items():
+            print(f"  {FRIENDLY_NAMES.get(k,k)} => coeff {v:.3f}")
+    else:
+        print("No importance overrides provided; using presets.")
+    print()
+    return overrides
+
+def load_dynamic_layer(path="data/dynamic.json"):
+    """
+    Optional JSON file with per-edge or per-node dynamic updates.
+    Example:
+    {
+      "edges": {"A-B-1": {"cctv": 0, "stray_animals": 1}},
+      "nodes": {"N1": {"some_node_attr": 1}}
+    }
+    Returns dict with 'edges' and 'nodes' keys (may be empty).
+    """
+    if not os.path.exists(path):
+        return {"edges": {}, "nodes": {}}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as ex:
+        print("Warning: failed to load dynamic layer:", ex)
+        return {"edges": {}, "nodes": {}}
+
+def apply_dynamic_updates_to_edges(edges, dynamic):
+    """
+    Merge dynamic edge updates into the edges list in-place.
+    Only overwrites keys present in dynamic; does not delete other attributes.
+    """
+    edge_updates = dynamic.get("edges", {}) if dynamic else {}
+    if not edge_updates:
+        return
+    by_id = {e.get("id"): e for e in edges if e.get("id")}
+    for eid, updates in edge_updates.items():
+        e = by_id.get(eid)
+        if not e:
+            continue
+        for k, v in updates.items():
+            e[k] = v
+
 def main_loop():
     nodes, edges, adj = build_graph()
     nodes_sorted = sorted(nodes.keys())
@@ -369,13 +445,12 @@ def main_loop():
     wp = ask_choice("Do you want the default route preferences or custom importance?", ["preset", "custom"])
     coeff_override = {}
     if wp == "custom":
-        print("Enter custom importance overrides to emphasize or reduce specific concerns.")
-        print("Examples:")
-        print("  lighting:2           (make lighting twice as important)")
-        print("  cctv:mul:1.5         (increase CCTV importance by 50%)")
-        print("  lighting:2,cctv:mul:1.5,crime:3")
-        raw = ask_text("Type overrides (or press Enter to skip): ")
-        coeff_override = parse_coeff_overrides(raw)
+        # Ask user a 0..1 importance for each attribute (these values scale the preset coeffs)
+        coeff_override = ask_custom_importance(mode)
+
+    # load/apply optional dynamic updates BEFORE scoring (does not modify source files)
+    dynamic = load_dynamic_layer()   # reads data/dynamic.json if present
+    apply_dynamic_updates_to_edges(edges, dynamic)
 
     avoid_nodes_raw = ask_text("Any locations to avoid? (enter ids, comma separated, or press Enter to skip): ")
     avoid_nodes = [x.strip() for x in avoid_nodes_raw.split(",") if x.strip()]
@@ -502,11 +577,14 @@ def main_loop():
 
             wp_new = ask_choice_simple("Weight preference (keep current):", ["keep current", "preset", "custom"])
             if wp_new == "custom":
-                raw = ask_text("Enter overrides (e.g. lighting:2,cctv:mul:1.5) or press Enter to cancel: ")
-                coeff_override = parse_coeff_overrides(raw)
+                coeff_override = ask_custom_importance(mode)
             elif wp_new == "preset":
                 coeff_override = {}
             # else keep current
+
+            # reload dynamic layer (in case it changed) and apply
+            dynamic = load_dynamic_layer()
+            apply_dynamic_updates_to_edges(edges, dynamic)
 
             # recompute everything with new constraints/weights
             safety_map, breakdowns = build_edge_weights_with_overrides(edges, mode, time_of_day, coeff_override)
