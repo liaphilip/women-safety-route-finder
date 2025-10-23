@@ -216,8 +216,8 @@ Contributions are welcome! Please:
 ## 📋 Requirements
 
 - Python 3.8+
-- matplotlib (optional, for visualization)
-- networkx (optional, for graph plotting)
+- matplotlib (for visualization)
+- networkx (for graph plotting)
 
 See `requirements.txt` for complete list.
 
@@ -232,27 +232,15 @@ See `requirements.txt` for complete list.
 - [ ] Multi-language support
 - [ ] Accessibility features
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## 👥 Team
 
-- **Person 1**: Dataset & Graph Construction
-- **Person 2**: Pathfinding Algorithms
-- **Person 3**: Safety Scoring System
-- **Person 4**: User Interface & Integration
+- **PAVANA P**: Dataset & Graph Construction
+- **LIA ANN PHILIP**: Pathfinding Algorithms
+- **MISHAL SABU**: Safety Scoring System
+- **AMIRTHINI R O**: User Interface & Integration
 
 ## 🙏 Acknowledgments
 
-- Inspired by the need for safer navigation options for women
-- Built as part of [Your Course/Project Name]
-- Thanks to all contributors and testers
+- Inspired by the need for safer navigation options for women and many 
+- Built as part of [Datastructure/Safetey-route-finder]
 
-## 📧 Contact
-
-For questions or support, please open an issue on GitHub or contact [your-email@example.com]
-
----
-
-**Note**: This system uses simulated data for demonstration. For production use, integrate with real-world safety databases and mapping services.
