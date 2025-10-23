@@ -2,7 +2,7 @@
 
 A route planning system that prioritizes safety of many individuals by considering multiple safety factors along with traditional routing metrics like distance and travel time.
 
-## * Features
+##  Features
 
 - **Multi-Factor Safety Analysis**: Evaluates routes based on lighting, CCTV coverage, crowd density, crime rates, and more
 - **Multiple Transport Modes**: Optimized routing for walking, two-wheeler, and car travel
@@ -18,17 +18,17 @@ A route planning system that prioritizes safety of many individuals by consideri
 - **Visual Route Display**: Interactive graph visualization with matplotlib
 
 ### STEPS TO REPRODUCE WORK:
-1.Install Python 3.10+
+**1.Install Python 3.10+**
 
-2.Install Required Libraries
+**2.Install Required Libraries**
 
 Run in Terminal:pip install matplotlib networkx
 
-3.Run Application
+**3.Run Application**
 
 Run in Terminal:python main.py
 
-4.Follow On-screen Instructions:
+**4.Follow On-screen Instructions:**
 
 
 # Create virtual environment (recommended)
