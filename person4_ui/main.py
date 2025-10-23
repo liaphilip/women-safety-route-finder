@@ -175,7 +175,7 @@ if HAVE_PLOTTING:
             if G.has_edge(a, b):
                 path_edges.append((a, b))
         
-        # draw bright blue path on top
+        # to draw bright blue path on top
         nx.draw_networkx_nodes(G, pos, nodelist=path_nodes, node_color="skyblue", node_size=700)
         nx.draw_networkx_edges(G, pos, edgelist=path_edges, width=4.0, edge_color="blue")
         edge_labels = {}
@@ -186,7 +186,8 @@ if HAVE_PLOTTING:
         plt.axis("off")
         plt.tight_layout()
         plt.show()
-################################################## MAIN LOOP#########################################################
+
+#now starts the main loop
 def ask_choice(prompt, options):
     while True:
         print(f"{prompt}")
@@ -255,8 +256,6 @@ def detect_time_of_day():
     return "day" if 7 <= h < 19 else "night"
 
 def parse_coeff_overrides(raw: str):
-    #  Is dis used? i think ask_custom_importance does this instead f snake cases
-    # Keeo just in case. 
     out = {}
     if not raw:
         return out
@@ -290,7 +289,7 @@ def build_edge_weights_with_overrides(edges, mode, time_of_day, custom_weights):
         eid = e.get("id")
         if not eid:
             continue
-        # this calls the function from safety_scoring.py
+        # to calls the function from safety_scoring.py
         w, bd = compute_edge_weight(e, mode, time_of_day, custom_weights)
         safety_map[eid] = float(w)
         breakdowns[eid] = bd
@@ -306,18 +305,12 @@ def prune_graph_remove_nodes(adj, avoid_set):
         for v, e in nbrs:
             if v in avoid_set:
                 continue
-            # skip edges that reference removed nodes
+            # to skip edges that reference the removed nodes
             new_nbrs.append((v, e))
         new_adj[n] = new_nbrs
     return new_adj
 
 def ask_custom_importance(mode_key: str):
-    """
-    Prompt user to set importance weights for every attribute.
-    These are importance multipliers only i,e, do NOT modify raw edge data).
-    final_coeff = preset_coeff * user_weight.
-    Returns a dict feature -> absolute coeff (float)
-    """
     presets = MODE_PRESETS.get(mode_key, {})
     if not presets:
         print("No presets for mode; using defaults.")
@@ -330,10 +323,10 @@ def ask_custom_importance(mode_key: str):
     overrides = {}
     for key, base_coeff in presets.items():
         friendly = FRIENDLY_NAMES.get(key, key)
-        # show current normalized to 1.0 meaning keep full preset
+        # to show current normalized to 1.0 meaning keep full preset
         raw = input(f"  {friendly} (default 1.00, preset coeff {base_coeff:.2f}) => enter 0.0-1.0 or Enter: ").strip()
         if raw == "":
-            continue # user skipped use default
+            continue 
         try:
             val = float(raw)
             if not (0.0 <= val <= 1.0):
@@ -412,16 +405,16 @@ def main_loop():
 
     print("Running pathfinders...")
     # pathfinding (distance, safety, combined)
-    # 1. Shortest path
+    # Shortest path
     dist_map = distance_map(adj_pruned)
     dpath_nodes, dpath_cost, dpath_edges = dijkstra(adj_pruned, start, end, dist_map)
 
 
-    # 2. Safest path
+    # Safest path
     safe_nodes, safe_cost, safe_edges = dijkstra(adj_pruned, start, end, safety_map)
     
 
-    # 3. Balanced pathsusing Yen's
+    # Balanced pathsusing Yen's
     combined_map = {}
     for eid, s in safety_map.items():
         d_norm = min(dist_map.get(eid, 0.0) / DIST_CAP, 1.0)
@@ -430,7 +423,6 @@ def main_loop():
     print("...Done finding routes!")
 
 
-    # if must-pass chain i'm tiruowng to do it here
     if must_pass_nodes:
         chain_nodes = None
         print("Calculating mandatory stop route...")
@@ -501,13 +493,13 @@ def main_loop():
                         print("Plot warning (accepted route):", ex)
 
                 print("Final route accepted. Exiting.")
-                return # Exit program
+                return # To Exit program
             except Exception:
                 print("Invalid input. Try again.")
                 continue
 
         elif choice == "2":
-            # allow user to update avoid nodes, must-pass, or custom weights (or keep same)
+            # allow user to update avoid nodes, must-pass, or custom weights (or keep the same)
             print("Update constraints and/or custom weights.")
             avoid_nodes_raw = ask_text(f"Avoid nodes (current: {avoid_nodes}, or press Enter to keep): ")
             if avoid_nodes_raw.strip():
@@ -527,10 +519,9 @@ def main_loop():
             if wp_new == "custom":
                 custom_weights = ask_custom_importance(mode)
             elif wp_new == "preset":
-                custom_weights = {} # reset to empty
-            # else keep current custom_weights
+                custom_weights = {}
 
-            # recompute everything
+            # to recompute everything
             safety_map, breakdowns = build_edge_weights_with_overrides(edges, mode, time_of_day, custom_weights)
             
             adj_pruned = prune_graph_remove_nodes(adj, set(avoid_nodes))
@@ -545,10 +536,10 @@ def main_loop():
                 combined_map[eid] = s + 1.0 * d_norm
             kpaths = yen_k_shortest(adj_pruned, start, end, combined_map, K=3)
 
-            # show updated candidates
+            # to show updated candidates
             show_candidates()
             
-            continue # Go back to the option loop
+            continue #  Let's Go back to the option loop
 
         elif choice == "3":
             eid = input("Enter edge id to show full breakdown (e.g., A-B): ").strip().upper()
@@ -574,13 +565,14 @@ def main_loop():
 
         elif choice == "4":
             print("Exiting without selecting a final route.")
-            return # Exit program
+            return
 
         else:
             print("Invalid option. Choose 1-4.")
 
 if __name__ == "__main__":
     main_loop()
+
 
 
 
