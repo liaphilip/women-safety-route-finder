@@ -1,6 +1,6 @@
-# Women's Safety Route Finder
+# Safety Route Finder
 
-A comprehensive route planning system that prioritizes women's safety by considering multiple safety factors alongside traditional routing metrics like distance and travel time.
+A route planning system that prioritizes safety of many individuals by considering multiple safety factors along with traditional routing metrics like distance and travel time.
 
 ## 🌟 Features
 
@@ -13,9 +13,9 @@ A comprehensive route planning system that prioritizes women's safety by conside
   - Balanced routes (safety + efficiency)
 - **Custom Safety Preferences**: Adjust importance weights for different safety factors
 - **Constraint Support**: 
-  - Avoid specific locations
-  - Mandatory waypoints
-  - Dynamic real-time updates
+  - can avoid specific locations
+  - can choose important attributes
+  - can proritize specific routes 
 - **Visual Route Display**: Interactive graph visualization with matplotlib
 
 ## 🚀 Quick Start
@@ -33,6 +33,8 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
+#insatll matplotlib for visualization
+pip install matplotlib
 ```
 
 ### Basic Usage
