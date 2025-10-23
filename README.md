@@ -118,6 +118,7 @@ Each route segment (edge) is evaluated based on:
 4. **Route Presentation**: User-friendly display with distance, time, and safety metrics
 
 ### *Project Structure
+```text
 RouteSafetyFinder/
 │
 ├── main.py                # Main program (CLI)
@@ -128,10 +129,9 @@ RouteSafetyFinder/
 ├── data/
 │   ├── nodes.json         # Node data (locations)
 │   ├── edges.json         # Edge data (distances, safety attributes)
-│   
 │
-└── README.md              # Documentation 
-
+└── README.md              # Documentation
+```
 ## * Configuration
 
 ### Custom Safety Weights
