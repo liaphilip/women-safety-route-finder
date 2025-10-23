@@ -1,10 +1,11 @@
 # graph_loader.py
-# Phase 2: Data Loading
-# Loads data/nodes.json and data/edges.json and builds adjacency list graph G.
+# This file loads the nodes.json and edges.json files
+# and builds the graph structure (adjacency list)
 import json
 from typing import Dict, List, Tuple
 
-def load_nodes(path="data/nodes.json") -> Dict[str, dict]:
+def load_nodes(path="data/nodes.json"):
+    # just reads the nodes.json file into a dict
     with open(path, "r", encoding="utf-8") as f:
         raw = json.load(f)
     nodes = {}
@@ -13,11 +14,12 @@ def load_nodes(path="data/nodes.json") -> Dict[str, dict]:
         nodes[nid] = {"id": nid, "name": n.get("name", nid)}
     return nodes
 
-def load_edges(path="data/edges.json") -> List[dict]:
+def load_edges(path="data/edges.json"):
+    # just reads the edges.json file into a list
     with open(path, "r", encoding="utf-8") as f:
         edges = json.load(f)
 
-    # Ensure each edge has an 'id' and 'distance_m'
+
     counter = {}
     for e in edges:
         u = e.get("u"); v = e.get("v")
@@ -26,27 +28,32 @@ def load_edges(path="data/edges.json") -> List[dict]:
         if "id" not in e:
             e["id"] = f"{u}-{v}-{counter[key]}"
         if "distance" in e and "distance_m" not in e:
-            e["distance_m"] = e["distance"]
+            e["distance_m"] = e["distance"] # fix missing key
     return edges
 
 def build_graph(nodes_path="data/nodes.json", edges_path="data/edges.json"):
     """
     Returns:
-      nodes: dict[node_id] -> {id, name}
-      edges: list[edge_dict]
-      adj: dict[node_id] -> list of (neighbor_id, edge_dict)
+      nodes: (dict) all the nodes
+      edges: (list) all the edges
+      adj: (dict) the adjacency list
     """
     nodes = load_nodes(nodes_path)
     edges = load_edges(edges_path)
 
-    adj: Dict[str, List[Tuple[str, dict]]] = {nid: [] for nid in nodes}
+    # create the adjacency list
+    adj = {nid: [] for nid in nodes}
     for e in edges:
         u = e["u"]; v = e["v"]
         if u not in adj: adj[u] = []
         if v not in adj: adj[v] = []
-        # undirected
+        
+        # undirected graph, so add edge in both directions
         adj[u].append((v, e))
         adj[v].append((u, e))
+        
+
+        
     return nodes, edges, adj
 
 # quick debug
