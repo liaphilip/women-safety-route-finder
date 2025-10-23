@@ -2,11 +2,11 @@
 
 A route planning system that prioritizes safety of many individuals by considering multiple safety factors along with traditional routing metrics like distance and travel time.
 
-## 🌟 Features
+## * Features
 
 - **Multi-Factor Safety Analysis**: Evaluates routes based on lighting, CCTV coverage, crowd density, crime rates, and more
 - **Multiple Transport Modes**: Optimized routing for walking, two-wheeler, and car travel
-- **Time-Aware Routing**: Different safety calculations for day vs. night travel
+- **Time-Of- The-Day Routing**:safety calculations for day vs. night travel
 - **Flexible Route Options**: 
   - Shortest distance route
   - Safest route
@@ -18,7 +18,7 @@ A route planning system that prioritizes safety of many individuals by consideri
   - can proritize specific routes 
 - **Visual Route Display**: Interactive graph visualization with matplotlib
 
-## 🚀 Quick Start
+## * Quick Start
 
 ### Installation
 
@@ -80,7 +80,7 @@ Safest option
   Safety summary: safer  (score: 4.127)
 ```
 
-## 📊 How It Works
+## * How It Works
 
 ### Safety Scoring System
 
@@ -147,7 +147,7 @@ Create `data/dynamic.json` to override safety attributes in real-time:
 }
 ```
 
-## 📁 Data Format
+## * Data Format
 
 ### Nodes (data/nodes.json)
 ```json
@@ -184,7 +184,7 @@ Create `data/dynamic.json` to override safety attributes in real-time:
 ]
 ```
 
-## 🧪 Testing
+## * Testing
 
 ```bash
 # Run all tests
@@ -197,13 +197,13 @@ python -m pytest tests/test_pathfinder.py
 python -m pytest --cov=src tests/
 ```
 
-## 📚 Documentation
+## * Documentation
 
 - [User Guide](docs/USER_GUIDE.md) - Detailed usage instructions
 - [Developer Guide](docs/DEVELOPER.md) - Architecture and extending the system
 - [API Reference](docs/API.md) - Module and function documentation
 
-## 🤝 Contributing
+## * Contributing
 
 Contributions are welcome! Please:
 
@@ -213,7 +213,7 @@ Contributions are welcome! Please:
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## 📋 Requirements
+## * Requirements
 
 - Python 3.8+
 - matplotlib (for visualization)
@@ -221,7 +221,7 @@ Contributions are welcome! Please:
 
 See `requirements.txt` for complete list.
 
-## 🔮 Future Enhancements
+## * Future Enhancements
 
 - [ ] Web-based UI
 - [ ] Mobile app integration
@@ -232,14 +232,14 @@ See `requirements.txt` for complete list.
 - [ ] Multi-language support
 - [ ] Accessibility features
 
-## 👥 Team
+## * Team
 
 - **PAVANA P**: Dataset & Graph Construction
 - **LIA ANN PHILIP**: Pathfinding Algorithms
 - **MISHAL SABU**: Safety Scoring System
 - **AMIRTHINI R O**: User Interface & Integration
 
-## 🙏 Acknowledgments
+## * Acknowledgments
 
 - Inspired by the need for safer navigation options for women and many 
 - Built as part of [Datastructure/Safetey-route-finder]
