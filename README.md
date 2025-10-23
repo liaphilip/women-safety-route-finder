@@ -212,24 +212,13 @@ python -m pytest tests/test_pathfinder.py
 python -m pytest --cov=src tests/
 ```
 
-## * Contributing
-
-Contributions are welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
 ## * Requirements
 
 - Python 3.8+
 - matplotlib (for visualization)
 - networkx (for graph plotting)
-
-See `requirements.txt` for complete list.
-
+- json
+  
 ## * Future Enhancements
 
 - [ ] Web-based UI
