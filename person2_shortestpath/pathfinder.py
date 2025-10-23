@@ -1,78 +1,58 @@
-# pathfinder.py
-# Correct Dijkstra (dist table + predecessors) and Yen's K-shortest (simple)
-# Ensures returned paths are simple (no node revisits -> no cycles like A->B->A->C)
-
 import heapq
 import copy
-from typing import Dict, List, Tuple, Optional
-
-def _build_edge_lookup(adj: Dict[str, List[Tuple[str, dict]]]) -> Dict[str, dict]:
-    """Return edge_id -> edge_dict lookup (captures one canonical edge object per id)."""
-    lookup = {}
-    for u, nbrs in adj.items():
-        for v, e in nbrs:
-            eid = e.get("id")
+from typing import Dict,List,Tuple,Optional
+def _build_edge_lookup(adj:Dict[str,List[Tuple[str,dict]]])->Dict[str, dict]:
+    lookup={}
+    for u,nbrs in adj.items():
+        for v,e in nbrs:
+            eid=e.get("id")
             if eid and eid not in lookup:
-                lookup[eid] = e
+                lookup[eid]=e
     return lookup
-
-def dijkstra(adj: Dict[str, List[Tuple[str, dict]]],
-             start: str,
-             end: str,
-             weight_map: Dict[str, float]) -> Tuple[Optional[List[str]], float, List[dict]]:
-    """
-    Classic Dijkstra using dist[] and prev pointers.
-    Returns (node_path, total_cost, edge_list) or (None, inf, []) if unreachable.
-    Guarantees a simple path (no node repeated).
-    """
-    # initialize
-    dist = {n: float("inf") for n in adj.keys()}
-    prev_node = {}   # node -> previous node on shortest path
-    prev_edge = {}   # node -> edge_id used to reach node
-    dist[start] = 0.0
-
-    pq = [(0.0, start)]
-    visited = set()
-
+def dijkstra(adj:Dict[str,List[Tuple[str,dict]]],
+             start:str,
+             end:str,
+             weight_map:Dict[str,float])->Tuple[Optional[List[str]],float,List[dict]]:
+    dist={n:float("inf")for n in adj.keys()}
+    prev_node={}   
+    prev_edge={}  
+    dist[start]=0.0
+    pq=[(0.0,start)]
+    visited=set()
     while pq:
-        d_u, u = heapq.heappop(pq)
+        d_u,u=heapq.heappop(pq)
         if u in visited:
             continue
         visited.add(u)
-
-        if u == end:
+        if u==end:
             break
-
-        for v, e in adj.get(u, []):
-            eid = e["id"]
-            w = weight_map.get(eid, float("inf"))
-            alt = d_u + w
-            if alt < dist.get(v, float("inf")):
-                dist[v] = alt
-                prev_node[v] = u
-                prev_edge[v] = eid
-                heapq.heappush(pq, (alt, v))
-
-    if dist.get(end, float("inf")) == float("inf"):
-        return None, float("inf"), []
-
-    # reconstruct node path and edge list
-    node_path = []
-    edge_list = []
-    cur = end
+        for v,e in adj.get(u,[]):
+            eid=e["id"]
+            w=weight_map.get(eid,float("inf"))
+            alt=d_u+w
+            if alt<dist.get(v,float("inf")):
+                dist[v]=alt
+                prev_node[v]=u
+                prev_edge[v]=eid
+                heapq.heappush(pq,(alt,v))
+    if dist.get(end,float("inf"))==float("inf"):
+        return None,float("inf"),[]
+    # reconstructing node path and edge list
+    node_path=[]
+    edge_list=[]
+    cur=end
     while True:
         node_path.append(cur)
-        if cur == start:
+        if cur==start:
             break
-        eid = prev_edge.get(cur)
+        eid=prev_edge.get(cur)
         if eid is None:
-            # should not happen if path exists
+            # should not happen if teh path already exists
             break
-        # edge object retrieval: find the edge object in adjacency (choose any matching id)
+        # find the edge object in adjacency (choose any matching id)
         # build later with edge lookup
-        cur = prev_node[cur]
+        cur=prev_node[cur]
     node_path.reverse()
-
     # build edge_list using node pairs and prev_edge mapping
     # reconstruct edges by walking node_path and finding corresponding edge id
     edge_lookup = _build_edge_lookup(adj)
