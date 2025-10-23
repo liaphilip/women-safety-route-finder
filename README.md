@@ -18,6 +18,7 @@ A route planning system that prioritizes safety of many individuals by consideri
 - **Visual Route Display**: Interactive graph visualization with matplotlib
 
 ### STEPS TO REPRODUCE WORK:
+Make sure that the nodes and edge files are in a folder named data and the rest of the files in the main folder.
 **1.Install Python 3.10+**
 
 **2.Install Required Libraries**
