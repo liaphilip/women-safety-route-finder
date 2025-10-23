@@ -17,9 +17,16 @@ A route planning system that prioritizes safety of many individuals by consideri
   - can choose important attributes 
 - **Visual Route Display**: Interactive graph visualization with matplotlib
 
-### Installation
+### STEPS TO REPRODUCE WORK:
+1.Install Python 3.10+
 
-```bash
+2.Install Required Libraries
+Run in Terminal:pip install matplotlib networkx
+
+3.Run Application
+Run in Terminal:python main.py
+
+4.Follow On-screen Instructions:
 
 
 # Create virtual environment (recommended)
