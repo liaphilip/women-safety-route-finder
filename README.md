@@ -246,4 +246,12 @@ See `requirements.txt` for complete list.
 
 - Inspired by the need for safer navigation options for women and many 
 - Built as part of [Datastructure/Safetey-route-finder]
-
+## *Job Division
+```
+| Team Member | Role | Responsibilities |
+|--------------|------|------------------|
+| **Pavana P** | Dataset & Graph Construction | Prepared dataset (nodes & edges), structured JSON files, and developed the graph loading module. |
+| **Lia Ann Philip** | Pathfinding Algorithms | Implemented Dijkstra’s and Yen’s K-shortest path algorithms for route computation. |
+| **Mishal Sabu** | Safety Scoring System | Designed and coded the safety scoring logic, including weighting factors and multi-mode adjustments. |
+| **Amirthini R O** | User Interface & Integration | Developed CLI interaction flow, handled user inputs, and integrated modules into the main program. |
+```
