@@ -1,5 +1,5 @@
 # main.py
-# CLI with accept/recompute loop and custom-weight input handling
+# This is the main file that runs the UI.
 from graph_loader import build_graph
 from safety_scoring import compute_edge_weight, DIST_CAP, MODE_PRESETS
 from pathfinder import dijkstra, yen_k_shortest, distance_map
@@ -7,6 +7,7 @@ from datetime import datetime
 import copy
 import json, os
 
+# Try to import plotting stuff, but it's ok if it fails
 try:
     import matplotlib.pyplot as plt
     import networkx as nx
@@ -14,28 +15,16 @@ try:
 except Exception:
     HAVE_PLOTTING = False
 
-# ---------- Helpers ----------
+# helpers
 
-def print_nodes_once(nodes):
-    # kept for compatibility; intentionally no-op
-    pass
+
 
 def parse_node_choice(user_input: str, nodes_sorted: list, nodes_dict: dict):
-    """Parse user input into a node id.
-    Accepts:
-      - number (1-based index into nodes_sorted)
-      - exact node id (case-insensitive)
-      - exact location name (case-insensitive)
-      - prefix of location name (case-insensitive)
-    Returns node id string or None if not matched.
-    """
     if user_input is None:
         return None
     s = user_input.strip()
     if not s:
         return None
-
-    # number selection (1-based index)
     if s.isdigit():
         idx = int(s) - 1
         if 0 <= idx < len(nodes_sorted):
@@ -43,47 +32,37 @@ def parse_node_choice(user_input: str, nodes_sorted: list, nodes_dict: dict):
         return None
 
     s_up = s.upper()
-
-    # exact match by node id
     for nid in nodes_sorted:
         if nid.upper() == s_up:
             return nid
-
-    # exact match by node display name
     for nid in nodes_sorted:
         name = nodes_dict.get(nid, {}).get("name", "")
         if name and name.strip().upper() == s_up:
             return nid
-
-    # prefix match by node display name
     matches = []
     for nid in nodes_sorted:
         name = nodes_dict.get(nid, {}).get("name", "")
         if name and name.strip().upper().startswith(s_up):
             matches.append(nid)
-
-    # if exactly one prefix match, return it; otherwise ambiguous -> None
     if len(matches) == 1:
         return matches[0]
     return None
 
 def show_locations_friendly(nodes):
-    """Friendly list of available locations for the user to pick from."""
     print("Available locations:")
     for i, k in enumerate(sorted(nodes.keys()), 1):
         name = nodes[k].get("name", k)
         print(f"  {i}. {name}  (id: {k})")
-    print("Tip: you can type the number, the id (e.g. A) or the location name (or a prefix).")
+    print(" you can type the number, the id (e.g. A) or the location name (or just the prefix).")
     print()
 
-# small helper to convert minutes to HH:MM if needed
 def _format_minutes(m):
     if m < 60:
         return f"{int(round(m))} min"
     h = int(m // 60)
     rem = int(round(m % 60))
     return f"{h}h {rem}m"
-
+#this is to make it look more user friendly
 FRIENDLY_NAMES = {
     "crime": "Crime",
     "lighting": "Lighting",
@@ -117,7 +96,6 @@ def _friendly_breakdown_print(bd):
             print(f"  - {name}: {val}")
 
 def display_route(title, nodes_seq, cost, edges, breakdowns, mode="walking", weight_kind="mixed"):
-    """More user-friendly route summary with ETA and plain-language safety info."""
     if nodes_seq is None:
         print(f"{title}: No route found.")
         return
@@ -125,12 +103,9 @@ def display_route(title, nodes_seq, cost, edges, breakdowns, mode="walking", wei
     # total distance
     total_distance = sum(int(e.get("distance_m", 0)) for e in edges)
 
-    # estimate travel time by mode (simple average speeds)
     speed_kmh = {"walking": 5.0, "two_wheeler": 20.0, "car": 40.0}
     sp = speed_kmh.get(mode, 5.0)
     est_minutes = (total_distance / 1000.0) / sp * 60.0
-
-    # interpret safety: lower total contrib -> safer
     total_safety = 0.0
     for e in edges:
         eid = e.get("id")
@@ -142,7 +117,7 @@ def display_route(title, nodes_seq, cost, edges, breakdowns, mode="walking", wei
                         total_safety += float(v["contrib"])
                     except:
                         pass
-
+    
     safety_msg = "safer" if total_safety < 5 else ("moderately safe" if total_safety < 12 else "less safe")
     print(f"{title}")
     print(f"  Route: {' → '.join(nodes_seq)}")
@@ -156,7 +131,6 @@ def display_route(title, nodes_seq, cost, edges, breakdowns, mode="walking", wei
         print(f"  Objective used: balanced (safety + distance). Algorithm cost = {cost:.4f}")
     print()
 
-# ---------- (optional) plotting helpers if available ----------
 if HAVE_PLOTTING:
     def build_networkx_graph(nodes_dict, edges_list):
         G = nx.Graph()
@@ -169,7 +143,7 @@ if HAVE_PLOTTING:
 
     def plot_full_graph(nodes, edges):
         G = build_networkx_graph(nodes, edges)
-        pos = nx.spring_layout(G, seed=42)
+        pos = nx.spring_layout(G, seed=42) # seed makes it look the same every time
         plt.figure(figsize=(8,6))
         nx.draw_networkx_nodes(G, pos, node_color="skyblue", node_size=700)
         nx.draw_networkx_edges(G, pos, width=1.0, alpha=0.7)
@@ -177,7 +151,7 @@ if HAVE_PLOTTING:
         nx.draw_networkx_labels(G, pos, labels, font_size=9)
         edge_labels = {(u,v): d.get("distance_m","") for u,v,d in G.edges(data=True)}
         nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=8)
-        plt.title("Full Graph — Locations")
+        plt.title("Full Graph  Locations")
         plt.axis("off")
         plt.tight_layout()
         plt.show()
@@ -188,15 +162,20 @@ if HAVE_PLOTTING:
         G = build_networkx_graph(nodes, edges)
         pos = nx.spring_layout(G, seed=42)
         plt.figure(figsize=(8,6))
+        
         nx.draw_networkx_nodes(G, pos, node_color="lightgray", node_size=500)
         nx.draw_networkx_edges(G, pos, width=1.0, alpha=0.4, edge_color="gray")
         labels = {n: G.nodes[n].get("name", n) for n in G.nodes()}
         nx.draw_networkx_labels(G, pos, labels, font_size=8)
+        
+        # find the edges for the path
         path_edges = []
         for i in range(len(path_nodes)-1):
             a, b = path_nodes[i], path_nodes[i+1]
             if G.has_edge(a, b):
                 path_edges.append((a, b))
+        
+        # draw bright blue path on top
         nx.draw_networkx_nodes(G, pos, nodelist=path_nodes, node_color="skyblue", node_size=700)
         nx.draw_networkx_edges(G, pos, edgelist=path_edges, width=4.0, edge_color="blue")
         edge_labels = {}
@@ -207,10 +186,8 @@ if HAVE_PLOTTING:
         plt.axis("off")
         plt.tight_layout()
         plt.show()
-
-# ---------- Main loop (with interaction + custom weight handling) ----------
+################################################## MAIN LOOP#########################################################
 def ask_choice(prompt, options):
-    """Ask user to choose from a list of options."""
     while True:
         print(f"{prompt}")
         for i, opt in enumerate(options, 1):
@@ -224,18 +201,17 @@ def ask_choice(prompt, options):
             pass
         print("Invalid choice. Please try again.")
 
-# small helper: simpler variant that accepts a default label list
 def ask_choice_simple(prompt, options):
     return ask_choice(prompt, options)
 
 def chain_must_pass(adj, start, must_pass_nodes, end, weight_map):
     """
-    Computes a route that passes through all 'must_pass_nodes' in the given order.
-    It chains Dijkstra results: start -> must1 -> must2 -> ... -> end
-    Returns (full_node_sequence, total_cost, edge_list)
+    for handling the must pass nodes.
+    It just runs dijkstra from one point to the next.
+    start -> must1, then must1 -> must2, .... anghane
+    returns (full_node_sequence, total_cost, edge_list)
     """
-    from pathfinder import dijkstra  # safe import here
-
+    from pathfinder import dijkstra 
     seg_nodes = []
     seg_edges = []
     total_cost = 0.0
@@ -244,10 +220,8 @@ def chain_must_pass(adj, start, must_pass_nodes, end, weight_map):
     for mp in must_pass_nodes + [end]:
         nodes_part, cost_part, edges_part = dijkstra(adj, cur, mp, weight_map)
         if nodes_part is None:
-            # path not found for a segment
             return None, float('inf'), None
 
-        # concatenate, skipping the first node (to avoid duplicates)
         if not seg_nodes:
             seg_nodes += nodes_part
         else:
@@ -281,11 +255,8 @@ def detect_time_of_day():
     return "day" if 7 <= h < 19 else "night"
 
 def parse_coeff_overrides(raw: str):
-    """
-    Parse string like "lighting:2,cctv:mul:1.5,crime:3" into dict.
-    Values are either float or ("mul", float) tuples.
-    We ignore invalid entries
-    """
+    # TODO: Is this used? I think ask_custom_importance does this instead?
+    # Kept just in case. 
     out = {}
     if not raw:
         return out
@@ -307,7 +278,7 @@ def parse_coeff_overrides(raw: str):
             continue
     return out
 
-def build_edge_weights_with_overrides(edges, mode, time_of_day, coeff_override):
+def build_edge_weights_with_overrides(edges, mode, time_of_day, custom_weights):
     """
     Returns (safety_map, breakdowns)
     safety_map: edge_id -> weight (float)
@@ -319,13 +290,13 @@ def build_edge_weights_with_overrides(edges, mode, time_of_day, coeff_override):
         eid = e.get("id")
         if not eid:
             continue
-        w, bd = compute_edge_weight(e, mode, time_of_day, coeff_override)
+        # this calls the function from safety_scoring.py
+        w, bd = compute_edge_weight(e, mode, time_of_day, custom_weights)
         safety_map[eid] = float(w)
         breakdowns[eid] = bd
     return safety_map, breakdowns
 
 def prune_graph_remove_nodes(adj, avoid_set):
-    """Return a new adjacency dict without nodes in avoid_set and without edges to them."""
     avoid_set = set(avoid_set or [])
     new_adj = {}
     for n, nbrs in adj.items():
@@ -342,84 +313,53 @@ def prune_graph_remove_nodes(adj, avoid_set):
 
 def ask_custom_importance(mode_key: str):
     """
-    Prompt user to set importance weights (0..1) for every attribute in MODE_PRESETS[mode_key].
-    These are importance multipliers only (do NOT modify raw edge data).
-    We apply the multiplier to the preset coefficient: final_coeff = preset_coeff * user_weight.
-    Returns a dict feature -> absolute coeff (float) suitable for compute_edge_weight overrides.
+    Prompt user to set importance weights for every attribute.
+    These are importance multipliers only i,e, do NOT modify raw edge data).
+    final_coeff = preset_coeff * user_weight.
+    Returns a dict feature -> absolute coeff (float)
     """
     presets = MODE_PRESETS.get(mode_key, {})
     if not presets:
         print("No presets for mode; using defaults.")
         presets = {}
 
-    print("\nSet importance for each factor on a 0.0 (ignore) to 1.0 (full) scale.")
+    print("\n--- Custom Safety Settings ---")
+    print("Set importance for each factor on a 0.0 (ignore) to 1.0 (full) scale.")
     print("Press Enter to keep the default importance (1.0).\n")
 
     overrides = {}
     for key, base_coeff in presets.items():
         friendly = FRIENDLY_NAMES.get(key, key)
         # show current normalized to 1.0 meaning keep full preset
-        raw = input(f"  {friendly} (default shown as 1.00, preset coeff {base_coeff:.2f}) => enter 0.0-1.0 or Enter: ").strip()
+        raw = input(f"  {friendly} (default 1.00, preset coeff {base_coeff:.2f}) => enter 0.0-1.0 or Enter: ").strip()
         if raw == "":
-            continue
+            continue # user skipped use default
         try:
             val = float(raw)
             if not (0.0 <= val <= 1.0):
-                print("    Value must be between 0 and 1 — skipping.")
+                print("    Value must be between 0 and 1  skipping.")
                 continue
-            # convert normalized to absolute coeff by scaling preset coefficient
             overrides[key] = float(base_coeff * val)
         except Exception:
-            print("    Invalid number — skipping.")
+            print("    Invalid number  skipping.")
             continue
 
     if overrides:
-        print("\nApplied importance overrides (these adjust weighting only):")
+        print("\nApplied custom importance weights (these adjust weighting only):")
         for k, v in overrides.items():
-            print(f"  {FRIENDLY_NAMES.get(k,k)} => coeff {v:.3f}")
+            print(f"  {FRIENDLY_NAMES.get(k,k)} => new coeff {v:.3f}")
     else:
-        print("No importance overrides provided; using presets.")
+        print("No custom weights provided; using presets.")
     print()
     return overrides
 
-def load_dynamic_layer(path="data/dynamic.json"):
-    """
-    Optional JSON file with per-edge or per-node dynamic updates.
-    Example:
-    {
-      "edges": {"A-B-1": {"cctv": 0, "stray_animals": 1}},
-      "nodes": {"N1": {"some_node_attr": 1}}
-    }
-    Returns dict with 'edges' and 'nodes' keys (may be empty).
-    """
-    if not os.path.exists(path):
-        return {"edges": {}, "nodes": {}}
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception as ex:
-        print("Warning: failed to load dynamic layer:", ex)
-        return {"edges": {}, "nodes": {}}
 
-def apply_dynamic_updates_to_edges(edges, dynamic):
-    """
-    Merge dynamic edge updates into the edges list in-place.
-    Only overwrites keys present in dynamic; does not delete other attributes.
-    """
-    edge_updates = dynamic.get("edges", {}) if dynamic else {}
-    if not edge_updates:
-        return
-    by_id = {e.get("id"): e for e in edges if e.get("id")}
-    for eid, updates in edge_updates.items():
-        e = by_id.get(eid)
-        if not e:
-            continue
-        for k, v in updates.items():
-            e[k] = v
 
 def main_loop():
+    print("Loading graph data...")
     nodes, edges, adj = build_graph()
     nodes_sorted = sorted(nodes.keys())
+    print(f"Loaded {len(nodes)} locations and {len(edges)} paths.")
 
     # optional: show full graph initially
     if HAVE_PLOTTING:
@@ -440,49 +380,60 @@ def main_loop():
     mode = ask_choice("How will you travel?", ["walking", "two_wheeler", "car"])
 
     time_of_day = detect_time_of_day()
+    print(f"(Auto-detected time as: {time_of_day})")
+
 
     # Ask whether to use preset or custom weight importance
     wp = ask_choice("Do you want the default route preferences or custom importance?", ["preset", "custom"])
-    coeff_override = {}
+    custom_weights = {}
     if wp == "custom":
-        # Ask user a 0..1 importance for each attribute (these values scale the preset coeffs)
-        coeff_override = ask_custom_importance(mode)
-
-    # load/apply optional dynamic updates BEFORE scoring (does not modify source files)
-    dynamic = load_dynamic_layer()   # reads data/dynamic.json if present
-    apply_dynamic_updates_to_edges(edges, dynamic)
-
+        # Ask user a 0..1 importance for each attribute
+        custom_weights = ask_custom_importance(mode)
     avoid_nodes_raw = ask_text("Any locations to avoid? (enter ids, comma separated, or press Enter to skip): ")
-    avoid_nodes = [x.strip() for x in avoid_nodes_raw.split(",") if x.strip()]
+    avoid_nodes = [x.strip().upper() for x in avoid_nodes_raw.split(",") if x.strip()]
     if start in avoid_nodes:
-        print(f"Note: Start location '{start}' was in your avoid list — it has been removed.")
+        print(f"Note: Start location '{start}' was in your avoid list  it has been removed.")
         avoid_nodes.remove(start)
     if end in avoid_nodes:
-        print(f"Note: Destination '{end}' was in your avoid list — it has been removed.")
+        print(f"Note: Destination '{end}' was in your avoid list  it has been removed.")
         avoid_nodes.remove(end)
 
     must_pass_raw = ask_text("Any mandatory stops along the way? (ids, in order, comma separated; press Enter to skip): ")
-    must_pass_nodes = [x.strip() for x in must_pass_raw.split(",") if x.strip()]
+    must_pass_nodes = [x.strip().upper() for x in must_pass_raw.split(",") if x.strip()]
 
+    
+    print("\nCalculating all edge safety weights...")
     # compute weights with possible overrides
-    safety_map, breakdowns = build_edge_weights_with_overrides(edges, mode, time_of_day, coeff_override)
+    safety_map, breakdowns = build_edge_weights_with_overrides(edges, mode, time_of_day, custom_weights)
+    # print(f"DEBUG: safety_map: {safety_map}")
 
-    # initial pruning
+    # initial pruning (remove "avoid" nodes)
     adj_pruned = prune_graph_remove_nodes(adj, set(avoid_nodes))
 
+    print("Running pathfinders...")
     # pathfinding (distance, safety, combined)
+    # 1. Shortest path
     dist_map = distance_map(adj_pruned)
     dpath_nodes, dpath_cost, dpath_edges = dijkstra(adj_pruned, start, end, dist_map)
+    # print(f"DEBUG: Found shortest path with {len(dpath_nodes or [])} nodes")
+
+    # 2. Safest path
     safe_nodes, safe_cost, safe_edges = dijkstra(adj_pruned, start, end, safety_map)
+    # print(f"DEBUG: Found safest path with {len(safe_nodes or [])} nodes")
+
+    # 3. Balanced pathsusing Yen's
     combined_map = {}
     for eid, s in safety_map.items():
         d_norm = min(dist_map.get(eid, 0.0) / DIST_CAP, 1.0)
-        combined_map[eid] = s + 1.0 * d_norm
+        combined_map[eid] = s + 1.0 * d_norm # balance factor 1.0
     kpaths = yen_k_shortest(adj_pruned, start, end, combined_map, K=3)
+    print("...Done finding routes!")
 
-    # if must-pass chain
+
+    # if must-pass chain i'm tiruowng to do it here
     if must_pass_nodes:
         chain_nodes = None
+        print("Calculating mandatory stop route...")
         try:
             chain_nodes, chain_cost, chain_edges = chain_must_pass(adj_pruned, start, must_pass_nodes, end, combined_map)
             if chain_nodes is None:
@@ -491,6 +442,7 @@ def main_loop():
                 print("\n--- Route satisfying required stops ---")
                 display_route("Route with required stops", chain_nodes, chain_cost, chain_edges, breakdowns, mode=mode, weight_kind="mixed")
         except Exception:
+            print("Error trying to calculate mandatory stop route.")
             pass
 
     # display candidate routes
@@ -506,20 +458,14 @@ def main_loop():
                 display_route(f"  Option {i}", nodes_i, cost_i, edges_i, breakdowns, mode=mode, weight_kind="mixed")
     show_candidates()
 
-    # optional plot first balanced
-    # if HAVE_PLOTTING and kpaths:
-    #     try:
-    #         first_nodes, _, _ = kpaths[0]
-    #         plot_path_highlight(nodes, edges, first_nodes)
-    #     except Exception as ex:
-    #         print("Plot warning:", ex)
 
     # Interaction loop (accept or recompute)
+    # This loop is cool it lets you rerun the search
     while True:
         print("\nOptions:")
         print("  1. Accept a route")
-        print("  2. Reject and update constraints (avoid/must-pass/custom weights) then recompute")
-        print("  3. Show breakdown for a specific edge")
+        print("  2. Change settings (avoid/must-pass/weights) and run again")
+        print("  3. Show safety breakdown for a specific edge")
         print("  4. Exit without accepting")
         choice = input("Choose (1-4): ").strip()
 
@@ -546,14 +492,16 @@ def main_loop():
                         continue
                 print("\n=== FINAL ROUTE SELECTED ===")
                 display_route(chosen[0], chosen[1], chosen[2], chosen[3], breakdowns, weight_kind="mixed")
+                
                 if HAVE_PLOTTING:
+                    print("Showing plot for selected route...")
                     try:
                         plot_path_highlight(nodes, edges, chosen[1])
                     except Exception as ex:
                         print("Plot warning (accepted route):", ex)
 
                 print("Final route accepted. Exiting.")
-                return
+                return # Exit program
             except Exception:
                 print("Invalid input. Try again.")
                 continue
@@ -561,69 +509,76 @@ def main_loop():
         elif choice == "2":
             # allow user to update avoid nodes, must-pass, or custom weights (or keep same)
             print("Update constraints and/or custom weights.")
-            avoid_nodes_raw = ask_text("Avoid nodes (comma separated ids, or press Enter to keep current): ")
+            avoid_nodes_raw = ask_text(f"Avoid nodes (current: {avoid_nodes}, or press Enter to keep): ")
             if avoid_nodes_raw.strip():
-                avoid_nodes = [x.strip() for x in avoid_nodes_raw.split(",") if x.strip()]
+                avoid_nodes = [x.strip().upper() for x in avoid_nodes_raw.split(",") if x.strip()]
                 if start in avoid_nodes:
-                    print(f"Note: Start node '{start}' was in avoid list — removing it.")
+                    print(f"Note: Start node '{start}' was in avoid list  removing it.")
                     avoid_nodes.remove(start)
                 if end in avoid_nodes:
-                    print(f"Note: End node '{end}' was in avoid list — removing it.")
+                    print(f"Note: End node '{end}' was in avoid list  removing it.")
                     avoid_nodes.remove(end)
 
-            must_pass_raw = ask_text("Must-pass nodes in order (comma separated ids, or press Enter to keep current): ")
+            must_pass_raw = ask_text(f"Must-pass nodes (current: {must_pass_nodes}, or press Enter to keep): ")
             if must_pass_raw.strip():
-                must_pass_nodes = [x.strip() for x in must_pass_raw.split(",") if x.strip()]
+                must_pass_nodes = [x.strip().upper() for x in must_pass_raw.split(",") if x.strip()]
 
-            wp_new = ask_choice_simple("Weight preference (keep current):", ["keep current", "preset", "custom"])
+            wp_new = ask_choice_simple("Weight preference (current):", ["keep current", "preset", "custom"])
             if wp_new == "custom":
-                coeff_override = ask_custom_importance(mode)
+                custom_weights = ask_custom_importance(mode)
             elif wp_new == "preset":
-                coeff_override = {}
-            # else keep current
+                custom_weights = {} # reset to empty
+            # else keep current custom_weights
 
-            # reload dynamic layer (in case it changed) and apply
-            dynamic = load_dynamic_layer()
-            apply_dynamic_updates_to_edges(edges, dynamic)
-
-            # recompute everything with new constraints/weights
-            safety_map, breakdowns = build_edge_weights_with_overrides(edges, mode, time_of_day, coeff_override)
+            # recompute everything
+            safety_map, breakdowns = build_edge_weights_with_overrides(edges, mode, time_of_day, custom_weights)
+            
             adj_pruned = prune_graph_remove_nodes(adj, set(avoid_nodes))
+            
             dist_map = distance_map(adj_pruned)
             dpath_nodes, dpath_cost, dpath_edges = dijkstra(adj_pruned, start, end, dist_map)
             safe_nodes, safe_cost, safe_edges = dijkstra(adj_pruned, start, end, safety_map)
+            
             combined_map = {}
             for eid, s in safety_map.items():
                 d_norm = min(dist_map.get(eid, 0.0) / DIST_CAP, 1.0)
                 combined_map[eid] = s + 1.0 * d_norm
             kpaths = yen_k_shortest(adj_pruned, start, end, combined_map, K=3)
 
-            # show updated candidates and (optionally) plot
+            # show updated candidates
             show_candidates()
-            if HAVE_PLOTTING and kpaths:
-                try:
-                    first_nodes, _, _ = kpaths[0]
-                    plot_path_highlight(nodes, edges, first_nodes)
-                except Exception as ex:
-                    print("Plot warning:", ex)
-            continue
+            
+            continue # Go back to the option loop
 
         elif choice == "3":
-            eid = input("Enter edge id to show full breakdown (e.g., A-B-1): ").strip()
-            bd = breakdowns.get(eid)
-            if not bd:
-                print("Edge id not found in breakdowns.")
+            eid = input("Enter edge id to show full breakdown (e.g., A-B): ").strip().upper()
+            
+            # find the edge id (since user might just type A-B)s
+            found_eid = None
+            if eid in breakdowns:
+                found_eid = eid
             else:
-                print(f"Breakdown for edge {eid}:")
+                for k in breakdowns.keys():
+                    if k.startswith(eid):
+                        found_eid = k
+                        print(f"(Found match: {k})")
+                        break
+            
+            bd = breakdowns.get(found_eid)
+            if not bd:
+                print(f"Edge id '{eid}' not found in breakdowns.")
+            else:
+                print(f"Breakdown for edge {found_eid} ({mode} @ {time_of_day}):")
                 _friendly_breakdown_print(bd)
             continue
 
         elif choice == "4":
             print("Exiting without selecting a final route.")
-            return
+            return # Exit program
 
         else:
             print("Invalid option. Choose 1-4.")
 
 if __name__ == "__main__":
     main_loop()
+#😭
