@@ -65,35 +65,7 @@ Safest option
   Safety summary: safer  (score: 4.127)
 ```
 
-## * How It Works
-
-### Safety Scoring System
-
-Each route segment (edge) is evaluated based on:
-
-**For Walking:**
-- Crime rate (high priority)
-- Street lighting quality
-- CCTV presence
-- Crowd density (U-shaped: avoid both empty and overcrowded)
-- Proximity to police stations
-- Sidewalk availability
-- Shop visibility
-- Stray animal presence
-
-**For Two-Wheeler:**
-- Road condition (high priority)
-- Traffic density and behavior
-- Accident history
-- Plus selected walking factors
-
-**For Car:**
-- Traffic conditions (highest priority)
-- Parking safety
-- Road condition
-- Reduced emphasis on pedestrian factors
-
-### *Algorithm
+### Algorithm
 
 1. **Graph Construction**: Locations (nodes) and paths (edges) with safety attributes
 2. **Weight Calculation**: Multi-factor safety score for each edge is calculated
@@ -104,7 +76,7 @@ weight = Σ (risk × coefficient × time_multiplier) + distance_penalty
    - Yen's K-shortest paths for alternatives
 4. **Route Presentation**: User-friendly display with distance, time, and safety metrics
 
-### *Project Structure
+### Project Structure
 ```text
 RouteSafetyFinder/
 │
@@ -119,7 +91,7 @@ RouteSafetyFinder/
 │
 └── README.md              # Documentation
 ```
-## * Configuration
+##  Configuration
 
 ### Custom Safety Weights
 
