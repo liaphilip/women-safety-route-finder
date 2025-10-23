@@ -108,7 +108,7 @@ Each route segment (edge) is evaluated based on:
 - Road condition
 - Reduced emphasis on pedestrian factors
 
-### Algorithm
+### *Algorithm
 
 1. **Graph Construction**: Locations (nodes) and paths (edges) with safety attributes
 2. **Weight Calculation**: Multi-factor safety score for each edge based on mode and time
@@ -117,7 +117,22 @@ Each route segment (edge) is evaluated based on:
    - Yen's K-shortest paths for alternatives
 4. **Route Presentation**: User-friendly display with distance, time, and safety metrics
 
-## 🔧 Configuration
+### *Project Structure
+RouteSafetyFinder/
+│
+├── main.py                # Main program (CLI)
+├── graph_loader.py        # Loads nodes and edges into adjacency list
+├── pathfinder.py          # Dijkstra’s and Yen’s K-shortest path algorithms
+├── safety_scoring.py      # Computes safety weights for each road segment
+│
+├── data/
+│   ├── nodes.json         # Node data (locations)
+│   ├── edges.json         # Edge data (distances, safety attributes)
+│   
+│
+└── README.md              # Documentation 
+
+## * Configuration
 
 ### Custom Safety Weights
 
@@ -197,12 +212,6 @@ python -m pytest tests/test_pathfinder.py
 python -m pytest --cov=src tests/
 ```
 
-## * Documentation
-
-- [User Guide](docs/USER_GUIDE.md) - Detailed usage instructions
-- [Developer Guide](docs/DEVELOPER.md) - Architecture and extending the system
-- [API Reference](docs/API.md) - Module and function documentation
-
 ## * Contributing
 
 Contributions are welcome! Please:
@@ -232,12 +241,6 @@ See `requirements.txt` for complete list.
 - [ ] Multi-language support
 - [ ] Accessibility features
 
-## * Team
-
-- **PAVANA P**: Dataset & Graph Construction
-- **LIA ANN PHILIP**: Pathfinding Algorithms
-- **MISHAL SABU**: Safety Scoring System
-- **AMIRTHINI R O**: User Interface & Integration
 
 ## * Acknowledgments
 
