@@ -7,7 +7,7 @@ from datetime import datetime
 import copy
 import json, os
 
-# Try to import plotting stuff, but it's ok if it fails
+# Try to import plotting stuff, but issok  if it fails
 try:
     import matplotlib.pyplot as plt
     import networkx as nx
@@ -255,8 +255,8 @@ def detect_time_of_day():
     return "day" if 7 <= h < 19 else "night"
 
 def parse_coeff_overrides(raw: str):
-    # TODO: Is this used? I think ask_custom_importance does this instead?
-    # Kept just in case. 
+    #  Is dis used? i think ask_custom_importance does this instead f snake cases
+    # Keeo just in case. 
     out = {}
     if not raw:
         return out
@@ -383,7 +383,7 @@ def main_loop():
     print(f"(Auto-detected time as: {time_of_day})")
 
 
-    # Ask whether to use preset or custom weight importance
+    # Asking whether to use preset or custom weight importance
     wp = ask_choice("Do you want the default route preferences or custom importance?", ["preset", "custom"])
     custom_weights = {}
     if wp == "custom":
@@ -405,7 +405,7 @@ def main_loop():
     print("\nCalculating all edge safety weights...")
     # compute weights with possible overrides
     safety_map, breakdowns = build_edge_weights_with_overrides(edges, mode, time_of_day, custom_weights)
-    # print(f"DEBUG: safety_map: {safety_map}")
+    
 
     # initial pruning (remove "avoid" nodes)
     adj_pruned = prune_graph_remove_nodes(adj, set(avoid_nodes))
@@ -415,11 +415,11 @@ def main_loop():
     # 1. Shortest path
     dist_map = distance_map(adj_pruned)
     dpath_nodes, dpath_cost, dpath_edges = dijkstra(adj_pruned, start, end, dist_map)
-    # print(f"DEBUG: Found shortest path with {len(dpath_nodes or [])} nodes")
+
 
     # 2. Safest path
     safe_nodes, safe_cost, safe_edges = dijkstra(adj_pruned, start, end, safety_map)
-    # print(f"DEBUG: Found safest path with {len(safe_nodes or [])} nodes")
+    
 
     # 3. Balanced pathsusing Yen's
     combined_map = {}
@@ -582,3 +582,4 @@ def main_loop():
 if __name__ == "__main__":
     main_loop()
 #😭
+
