@@ -21,9 +21,11 @@ A route planning system that prioritizes safety of many individuals by consideri
 1.Install Python 3.10+
 
 2.Install Required Libraries
+
 Run in Terminal:pip install matplotlib networkx
 
 3.Run Application
+
 Run in Terminal:python main.py
 
 4.Follow On-screen Instructions:
