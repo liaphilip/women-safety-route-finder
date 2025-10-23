@@ -29,28 +29,13 @@ Run in Terminal:pip install matplotlib networkx
 Run in Terminal:python main.py
 
 **4.Follow On-screen Instructions:**
-
-
-# Create virtual environment (recommended)
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-#insatll matplotlib for visualization
-pip install matplotlib
-```
-
-### Basic Usage
-
-Follow the interactive prompts to:
 1. Select start and destination points
 2. Choose transportation mode
 3. Auto detects time of day 
 4. Optionally customize safety preferences
 5. Review and select from multiple route options
 
-### Example Session
+### Example 
 
 ```
 Available locations:
@@ -146,43 +131,6 @@ Set importance for each factor:
   Lighting (preset coeff 2.20) => enter 0.0-1.0: 1.0
   CCTV coverage (preset coeff 1.60) => enter 0.0-1.0: 0.6
   ...
-```
-
-## * Data Format
-
-### Nodes (data/nodes.json)
-```json
-[
-  {"id": "A", "name": "Crossroad A"},
-  {"id": "B", "name": "Park Entrance"}
-]
-```
-
-### Edges (data/edges.json)
-```json
-[
-  {
-    "id": "A-B",
-    "u": "A",
-    "v": "B",
-    "distance_m": 320,
-    "modes": {
-      "walking": {
-        "day": {
-          "crime": 2,
-          "crowd_density": 3,
-          "cctv": 1,
-          "lighting": 7
-        },
-        "night": {
-          "crime": 4,
-          "lighting": 3,
-          "crowd_density": 1
-        }
-      }
-    }
-  }
-]
 ```
 
 ## * Requirements
