@@ -1,5 +1,5 @@
 # main.py
-# This is the main file that runs the UI.
+# This is the main file that runs the UI part.
 from graph_loader import build_graph
 from safety_scoring import compute_edge_weight, DIST_CAP, MODE_PRESETS
 from pathfinder import dijkstra, yen_k_shortest, distance_map
@@ -582,5 +582,6 @@ def main_loop():
 if __name__ == "__main__":
     main_loop()
 #😭
+
 
 
